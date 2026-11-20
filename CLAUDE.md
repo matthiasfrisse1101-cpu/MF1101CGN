@@ -14,7 +14,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 
 ## Unterlagen
 - `vorlagen_intern/` ist per `.gitignore` ausgeschlossen: Vorlage (docx), Musterbeckenbuch (doc), ARV Nr. 2, Auftrag.
-- Abgeleitete Gliederung (Entwurf): `docs/etappe0_gliederung.md`.
+- Abgeleitete Gliederung (Entwurf): `vorlagen_intern/docs/etappe0_gliederung.md` (nur lokal, enthält Vorlagentexte).
 - Konzept mit Quellen: `docs/etappe1_konzept.md`.
 - Etappenberichte: `docs/etappe2_bericht.md`.
 - Echte Gliederung: `vorlagen_intern/gliederung_bestandsanlage.json` (nur lokal).
@@ -44,7 +44,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - GitHub-Konto für GitHub Pages (legt der Nutzer an); Git-Autor auf noreply-Adresse stellen.
 - Ob der Dienst-PC github.io erreicht (für Word am Rechner).
 - [BELEG FEHLT]-Punkte aus dem Konzept: Daten nach Entfernen des App-Symbols, Betreff-Übernahme der Mail-App, IndexedDB-Dauerhaftigkeit, Offline-Diktat Deutsch am Gerät.
-- Vorschläge aus `docs/etappe0_gliederung.md` (Unklarheiten 2–5) bestätigen lassen: C 1-Intervall aus Teilbauwerken vorschlagen, beliebig viele Eingriffsstellen, hydraulische Daten als vorgeschlagene Zeilen, Feld „Wasserschutzzone“ als Vorschlag.
+- Vorschläge aus `vorlagen_intern/docs/etappe0_gliederung.md` (nur lokal, enthält Vorlagentexte) (Unklarheiten 2–5) bestätigen lassen: C 1-Intervall aus Teilbauwerken vorschlagen, beliebig viele Eingriffsstellen, hydraulische Daten als vorgeschlagene Zeilen, Feld „Wasserschutzzone“ als Vorschlag.
 - Beispiel eines fertig ausgefüllten Beckenbuchs (falls vorhanden).
 
 ## Stand
