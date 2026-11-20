@@ -16,6 +16,15 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - `vorlagen_intern/` ist per `.gitignore` ausgeschlossen: Vorlage (docx), Musterbeckenbuch (doc), ARV Nr. 2, Auftrag.
 - Abgeleitete Gliederung (Entwurf): `docs/etappe0_gliederung.md`.
 - Konzept mit Quellen: `docs/etappe1_konzept.md`.
+- Etappenberichte: `docs/etappe2_bericht.md`.
+- Echte Gliederung: `vorlagen_intern/gliederung_bestandsanlage.json` (nur lokal).
+
+## Technik (Kurz)
+- Kein Build. `js/app.js` (Bildschirme), `js/gliederung.js` (reine Logik, testbar), `js/db.js` (IndexedDB, Warteschlange, durability strict), `js/zahlen.js`, `sw.js` (Cache; auf localhost network-first).
+- Tests: `tests/run.html` im Browser (eigener Mini-Rahmen `tests/harness.js`), solange Node fehlt.
+- Lokaler Server: `python3 -m http.server 8123 --bind 127.0.0.1` im App-Ordner (Desktop-Zugriff: aus der Bash starten, nicht über launch.json).
+- Beispielzeilen aus `vorschlagZeilen` tragen `_vorschlag: true` und zählen erst nach Bestätigung.
+- VERSION in `js/version.js` und `sw.js` gleich halten.
 
 ## Entscheidungen
 | Datum | Entscheidung | Begründung |
@@ -26,7 +35,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 | 20.11.2026 | PDF entsteht auf dem Handy; Word-Datei am Rechner aus der Sicherungsdatei – mit derselben Web-App im Desktop-Browser, Vorlagenpaket dort ebenfalls geladen | Wunsch des Nutzers; eine Codebasis für beide Wege |
 | 20.11.2026 | Anlagenart: Teilbauwerke auf dem Deckblatt sind führend; A 1 „Art des Bauwerks“ und A 5.2 „Art der Anlage“ werden als Vorschlag daraus abgeleitet und bestätigt | Wunsch des Nutzers |
 | 20.11.2026 | Optionale Abschnitte A 3, A 4.2, B 2 nach Musterbeckenbuch zuschaltbar | Auftrag v1.3 |
-| 20.11.2026 | Vorschlag Etappe 1 (wartet auf Bestätigung): Web-App ohne Build-Schritt; Bibliotheken pdfmake (PDF), easy-template-x (Word), JSZip (Sicherung) lokal; Speicher IndexedDB mit dauerhaftem Speicher; keine Browser-Spracherkennung; Sicherung per Download statt Teilen; Hosting GitHub Pages; Tests mit Node (eingebauter Test-Runner) | s. docs/etappe1_konzept.md |
+| 20.11.2026 | Etappe 1 freigegeben: Web-App ohne Build-Schritt; Bibliotheken pdfmake (PDF), easy-template-x (Word), JSZip (Sicherung) lokal; Speicher IndexedDB mit dauerhaftem Speicher; keine Browser-Spracherkennung; Sicherung per Download statt Teilen; Hosting GitHub Pages; Tests mit Node (eingebauter Test-Runner) | s. docs/etappe1_konzept.md |
 
 ## Offene Punkte
 - Handymodell, Android-Version, Browser.
@@ -40,4 +49,5 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 
 ## Stand
 - Etappe 0 abgeschlossen (20.11.2026).
-- Etappe 1 abgeschlossen (20.11.2026), wartet auf Bestätigung. Nächster Schritt: Etappe 2 – Grundgerüst.
+- Etappe 1 abgeschlossen und freigegeben (20.11.2026).
+- Etappe 2 abgeschlossen (20.11.2026), wartet auf „weiter“. Nächster Schritt: Etappe 3 – Fotos und Skizzen.

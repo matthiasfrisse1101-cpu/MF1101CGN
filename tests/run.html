@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Tests Beckenbuch</title>
+<style>body{font-family:system-ui;padding:1rem}.ok{color:#17602a}.fehler{color:#a1001b;font-weight:700}</style></head>
+<body><h1>Automatische Tests</h1><p id="summe">läuft …</p><ul id="liste"></ul>
+<script type="module">
+  import { ausfuehren } from './harness.js';
+  import './zahlen.test.js';
+  import './gliederung.test.js';
+  import './dateien.test.js';
+  import './db.test.js';
+  const liste = document.getElementById('liste');
+  const r = await ausfuehren((e) => {
+    const li = document.createElement('li');
+    li.className = e.ok ? 'ok' : 'fehler';
+    li.textContent = (e.ok ? '✓ ' : '✗ ') + e.name + (e.fehler ? ' – ' + e.fehler : '');
+    liste.append(li);
+  });
+  document.getElementById('summe').textContent = `${r.ok} bestanden, ${r.fehler} fehlgeschlagen`;
+  window.testErgebnis = r;
+</script></body></html>
