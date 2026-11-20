@@ -15,6 +15,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 ## Unterlagen
 - `vorlagen_intern/` ist per `.gitignore` ausgeschlossen: Vorlage (docx), Musterbeckenbuch (doc), ARV Nr. 2, Auftrag.
 - Abgeleitete Gliederung (Entwurf): `docs/etappe0_gliederung.md`.
+- Konzept mit Quellen: `docs/etappe1_konzept.md`.
 
 ## Entscheidungen
 | Datum | Entscheidung | Begründung |
@@ -25,13 +26,18 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 | 20.11.2026 | PDF entsteht auf dem Handy; Word-Datei am Rechner aus der Sicherungsdatei – mit derselben Web-App im Desktop-Browser, Vorlagenpaket dort ebenfalls geladen | Wunsch des Nutzers; eine Codebasis für beide Wege |
 | 20.11.2026 | Anlagenart: Teilbauwerke auf dem Deckblatt sind führend; A 1 „Art des Bauwerks“ und A 5.2 „Art der Anlage“ werden als Vorschlag daraus abgeleitet und bestätigt | Wunsch des Nutzers |
 | 20.11.2026 | Optionale Abschnitte A 3, A 4.2, B 2 nach Musterbeckenbuch zuschaltbar | Auftrag v1.3 |
+| 20.11.2026 | Vorschlag Etappe 1 (wartet auf Bestätigung): Web-App ohne Build-Schritt; Bibliotheken pdfmake (PDF), easy-template-x (Word), JSZip (Sicherung) lokal; Speicher IndexedDB mit dauerhaftem Speicher; keine Browser-Spracherkennung; Sicherung per Download statt Teilen; Hosting GitHub Pages; Tests mit Node (eingebauter Test-Runner) | s. docs/etappe1_konzept.md |
 
 ## Offene Punkte
 - Handymodell, Android-Version, Browser.
 - Größengrenze des Postfachs (Warnschwelle Dateigröße).
-- Node.js ist auf dem Mac nicht installiert (kein Homebrew). Für Tests und Entwicklungsserver nötig → in Etappe 1 klären (Installationsweg).
+- Node.js ist auf dem Mac nicht installiert (kein Homebrew). Nutzer installiert LTS-Version per .pkg von nodejs.org.
+- GitHub-Konto für GitHub Pages (legt der Nutzer an); Git-Autor auf noreply-Adresse stellen.
+- Ob der Dienst-PC github.io erreicht (für Word am Rechner).
+- [BELEG FEHLT]-Punkte aus dem Konzept: Daten nach Entfernen des App-Symbols, Betreff-Übernahme der Mail-App, IndexedDB-Dauerhaftigkeit, Offline-Diktat Deutsch am Gerät.
 - Vorschläge aus `docs/etappe0_gliederung.md` (Unklarheiten 2–5) bestätigen lassen: C 1-Intervall aus Teilbauwerken vorschlagen, beliebig viele Eingriffsstellen, hydraulische Daten als vorgeschlagene Zeilen, Feld „Wasserschutzzone“ als Vorschlag.
 - Beispiel eines fertig ausgefüllten Beckenbuchs (falls vorhanden).
 
 ## Stand
-- Etappe 0 abgeschlossen (20.11.2026). Nächster Schritt: Etappe 1 – Konzept, noch kein Code.
+- Etappe 0 abgeschlossen (20.11.2026).
+- Etappe 1 abgeschlossen (20.11.2026), wartet auf Bestätigung. Nächster Schritt: Etappe 2 – Grundgerüst.
