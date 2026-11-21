@@ -1,7 +1,7 @@
 {
   "format": 1,
   "vorlage": "TESTVORLAGE – keine echte Dienststellen-Vorlage",
-  "version": "test-2026-11-20",
+  "version": "test-2026-11-21",
   "testdaten": true,
   "hinweise": "Dies ist eine Test-Gliederung mit erfundenen Feldern. Für echte Beckenbücher laden Sie unter Einstellungen das Vorlagenpaket Ihrer Dienststelle.",
   "teilbauwerke": [
@@ -44,14 +44,15 @@
       "titel": "Testkapitel Tabelle und Medien",
       "teil": "A",
       "felder": [
-        { "id": "tabelle", "label": "Test-Tabelle", "art": "tabelle", "ort": "vor_ort",
+        { "id": "tabelle", "label": "Test-Tabelle", "art": "tabelle", "ort": "vor_ort", "fotosJeZeile": true,
           "spalten": [
             { "id": "nr", "label": "Nr.", "art": "zahl" },
             { "id": "text", "label": "Bezeichnung", "art": "text" }
           ],
           "vorschlagZeilen": [ { "text": "Testvorschlag 1" } ] },
         { "id": "foto", "label": "Test-Foto", "art": "foto", "ort": "vor_ort" },
-        { "id": "skizze", "label": "Test-Skizze", "art": "skizze", "ort": "vor_ort" }
+        { "id": "skizze", "label": "Test-Skizze", "art": "skizze", "ort": "vor_ort", "marken": "T2.tabelle" },
+        { "id": "skizze_kopie", "label": "Test-Skizze (Kopie)", "art": "skizze", "aus": "T2.skizze" }
       ]
     },
     {

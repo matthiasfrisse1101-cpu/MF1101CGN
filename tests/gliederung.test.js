@@ -109,6 +109,36 @@ test('Aus-den-Akten-Liste', () => {
   gleich(ids, ['T1.laenge', 'T1.datum'], 'Reihenfolge wie in der Gliederung:');
 });
 
+test('Prüfung: Marken einer Skizze brauchen Tabelle mit Spalte nr', () => {
+  const g = structuredClone(testG);
+  feld(g, 'T2', 'skizze').marken = 'T1.pflichttext';
+  wahr(G.pruefeGliederung(g).some((t) => t.includes('Spalte "nr"')), 'falsches Ziel nicht erkannt');
+  feld(g, 'T2', 'skizze').marken = 'T2.gibtsnicht';
+  wahr(G.pruefeGliederung(g).some((t) => t.includes('zeigt auf kein Feld')), 'fehlendes Ziel nicht erkannt');
+});
+
+test('Prüfung: Kopie einer Skizze muss auf Skizze zeigen', () => {
+  const g = structuredClone(testG);
+  feld(g, 'T2', 'skizze_kopie').aus = 'T2.foto';
+  wahr(G.pruefeGliederung(g).some((t) => t.includes('derselben Art')));
+});
+
+test('Foto/Skizze: leer bis eine ID eingetragen ist; Kopie zeigt Werte der Quelle', () => {
+  const b = leeresBuch();
+  gleich(G.feldStatus(testG, b, 'T2', feld(testG, 'T2', 'foto')), 'leer');
+  b.werte['T2.foto'] = { wert: ['f-1'], status: null };
+  b.werte['T2.skizze'] = { wert: ['s-1'], status: null };
+  gleich(G.feldStatus(testG, b, 'T2', feld(testG, 'T2', 'foto')), 'erfasst');
+  gleich(G.wertVon(testG, b, 'T2', feld(testG, 'T2', 'skizze_kopie')), ['s-1']);
+  gleich(G.kapitelFortschritt(testG, b, kap(testG, 'T2')).gesamt, 3, 'Kopie zählt nicht als eigenes Feld');
+});
+
+test('Tabellenzeile mit Foto der Unterlage zählt als Inhalt', () => {
+  const f = feld(testG, 'T2', 'tabelle');
+  wahr(!G.zeileHatInhalt(f, { id: 'z', fotos: [] }));
+  wahr(G.zeileHatInhalt(f, { id: 'z', fotos: ['f-1'] }));
+});
+
 // Echte Gliederung – nur lokal vorhanden (vorlagen_intern ist nicht im Repository).
 const echt = await fetch('../vorlagen_intern/gliederung_bestandsanlage.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
 if (echt) {
@@ -116,6 +146,12 @@ if (echt) {
   test('Echte Gliederung: Pflichtkapitel des Mindestumfangs vorhanden', () => {
     const ids = echt.kapitel.map((k) => k.id);
     for (const id of ['DECK', 'FOTO', 'A1', 'A2', 'A4_1', 'A5_2', 'A8', 'A9', 'B1', 'B4', 'C1', 'C2']) wahr(ids.includes(id), `${id} fehlt`);
+  });
+  test('Echte Gliederung: Funktionsskizze mit Eingriffsstellen verknüpft, Kopie in A 8, Anlagenfotos B 1/B 4', () => {
+    const f = (k, id) => echt.kapitel.find((x) => x.id === k).felder.find((x) => x.id === id);
+    gleich(f('A4_1', 'funktionsskizze').marken, 'A4_1.eingriffsstellen');
+    gleich(f('A8', 'funktionsskizze_kopie').aus, 'A4_1.funktionsskizze');
+    wahr(f('B1', 'unterlagen').fotosJeZeile && f('B4', 'plaene').fotosJeZeile, 'Fotos je Zeile fehlen');
   });
   test('Echte Gliederung: Musterbeckenbuch-Abschnitte sind zuschaltbar', () => {
     for (const id of ['A3', 'A4_2', 'B2']) wahr(echt.kapitel.find((k) => k.id === id).zuschaltbar, `${id} nicht zuschaltbar`);

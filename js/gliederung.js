@@ -63,9 +63,23 @@ export function pruefeGliederung(g) {
       pruefeSichtbar(f.sichtbarWenn, tbIds, wo, fehler);
     }
   }
+  const index = new Map();
+  for (const k of g.kapitel || []) for (const f of k.felder || []) if (k.id && f.id) index.set(feldKey(k.id, f.id), f);
   for (const k of g.kapitel || []) {
     for (const f of k.felder || []) {
-      if (f.aus && !alleKeys.has(f.aus)) fehler.push(`Feld ${k.id}.${f.id}: Verweis "aus": "${f.aus}" zeigt auf kein Feld.`);
+      const wo = `Feld ${k.id}.${f.id}`;
+      if (f.aus && !alleKeys.has(f.aus)) fehler.push(`${wo}: Verweis "aus": "${f.aus}" zeigt auf kein Feld.`);
+      if (f.aus && index.has(f.aus) && ['foto', 'skizze'].includes(f.art) && index.get(f.aus).art !== f.art) {
+        fehler.push(`${wo}: "aus" muss auf ein Feld derselben Art (${f.art}) zeigen.`);
+      }
+      // Marken einer Skizze sind mit einer Tabelle verknüpft (Spalte "nr"), z. B. Eingriffsstellen.
+      if (f.marken) {
+        const t = index.get(f.marken);
+        if (f.art !== 'skizze') fehler.push(`${wo}: "marken" gibt es nur bei Skizzen.`);
+        if (!t) fehler.push(`${wo}: "marken": "${f.marken}" zeigt auf kein Feld.`);
+        else if (t.art !== 'tabelle' || !(t.spalten || []).some((s) => s.id === 'nr')) fehler.push(`${wo}: "marken" muss auf eine Tabelle mit Spalte "nr" zeigen.`);
+      }
+      if (f.fotosJeZeile && f.art !== 'tabelle') fehler.push(`${wo}: "fotosJeZeile" gibt es nur bei Tabellen.`);
     }
   }
   for (const m of g.mindestumfang || []) {
@@ -120,6 +134,7 @@ export function istLeer(feld, wert) {
 // Vorschlagszeilen aus der Vorlage (Beispiele) zählen erst, wenn sie bestätigt oder bearbeitet wurden.
 export function zeileHatInhalt(feld, zeile) {
   if (zeile && zeile._vorschlag) return false;
+  if (zeile && Array.isArray(zeile.fotos) && zeile.fotos.length) return true;
   return (feld.spalten || []).some((s) => zeile && zeile[s.id] !== undefined && String(zeile[s.id]).trim() !== '');
 }
 

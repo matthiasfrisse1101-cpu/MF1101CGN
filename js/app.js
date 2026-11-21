@@ -1,9 +1,13 @@
 // Beckenbuch-App – Bildschirme und Ablauf.
 import * as db from './db.js';
 import * as G from './gliederung.js';
-import { h, leere, meldung, bestaetigen, datumDE, mitwachsen } from './ui.js';
+import { h, leere, meldung, bestaetigen, datumDE, mitwachsen, sprungziel } from './ui.js';
 import { leseDezimal } from './zahlen.js';
 import { VERSION } from './version.js';
+import { fotoFeld } from './fotos.js';
+import { skizzenFeld, bildschirmSkizze, ladeSkizzen } from './skizzen.js';
+import { eingriffsAbgleich, markenNummern } from './skizzenlogik.js';
+import { urlsFreigeben } from './bilder.js';
 
 const app = document.getElementById('app');
 const zustand = {
@@ -66,12 +70,14 @@ function speichereEinstellungen() {
 // ---------- Router ----------
 async function zeige() {
   const teile = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  urlsFreigeben(); // Vorschaubilder des vorigen Bildschirms freigeben
   try {
     if (teile.length === 0) await bildschirmListe();
     else if (teile[0] === 'neu') await bildschirmNeu();
     else if (teile[0] === 'einstellungen') await bildschirmEinstellungen();
     else if (teile[0] === 'buch' && teile[2] === 'kapitel') await bildschirmKapitel(teile[1], teile[3]);
     else if (teile[0] === 'buch' && teile[2] === 'akten') await bildschirmAkten(teile[1]);
+    else if (teile[0] === 'buch' && teile[2] === 'skizze') await bildschirmSkizze({ app, kopf, fuss, ladeBuch, gliederungFuer, aendern }, teile[1], teile[3]);
     else if (teile[0] === 'buch') await bildschirmBuch(teile[1]);
     else location.hash = '#/';
   } catch (e) {
@@ -80,6 +86,11 @@ async function zeige() {
     app.append(kopf('Fehler', '#/'), h('main', {}, h('p', { class: 'fehlertext' }, String(e.message || e))));
   }
   window.scrollTo(0, 0);
+  if (sprungziel.key) {
+    const ziel = document.getElementById(`feld-${sprungziel.key}`);
+    sprungziel.key = null;
+    if (ziel) ziel.scrollIntoView({ block: 'start' });
+  }
 }
 
 function kopf(titel, zurueck, zusatz) {
@@ -283,7 +294,7 @@ async function bildschirmBuch(id) {
       onclick: async () => {
         const ok = await bestaetigen(`„${G.buchName(buch)}“ endgültig löschen? Das lässt sich nicht rückgängig machen. Ohne Sicherungsdatei sind die Daten verloren.`, 'Endgültig löschen', 'Abbrechen', true);
         if (!ok) return;
-        await db.loesche('buecher', buch.id);
+        await loescheBuchMitBildern(buch.id);
         meldung('Beckenbuch gelöscht.');
         location.hash = '#/';
       },
@@ -291,6 +302,19 @@ async function bildschirmBuch(id) {
   ));
 
   app.append(kopf(G.buchName(buch), '#/'), main);
+}
+
+// Beckenbuch samt seinen Fotos und Skizzen löschen.
+async function loescheBuchMitBildern(buchId) {
+  for (const store of ['fotos', 'skizzen']) {
+    for (const r of await db.alle(store)) if (r.buchId === buchId) await db.loesche(store, r.id);
+  }
+  await db.loesche('buecher', buchId);
+}
+
+// Was Foto- und Skizzenfelder vom Beckenbuch brauchen.
+function bildKontext(buch) {
+  return { buch, aendern, standortAn: !!zustand.einstellungen.standortFotos, erfasser: zustand.einstellungen.erfasser || '' };
 }
 
 // ---------- Aus den Akten ----------
@@ -374,6 +398,16 @@ function feldBlock(g, buch, kap, feld) {
   if (feld.hinweis) block.append(h('p', { class: 'feld-hinweis' }, feld.hinweis));
 
   // Feld, das nur einen anderen Wert anzeigt
+  if (feld.aus && (feld.art === 'foto' || feld.art === 'skizze')) {
+    const ids = G.wertVon(g, buch, kap.id, feld) || [];
+    const [qk, qf] = feld.aus.split('.');
+    const quelle = g.kapitel.find((k) => k.id === qk);
+    block.append(feld.art === 'foto'
+      ? fotoFeld({ kontext: bildKontext(buch), feldKey: feld.aus, ids, setzeIds: () => {}, nurAnzeigen: true })
+      : skizzenFeld({ kontext: bildKontext(buch), kap: { id: qk }, feld: { id: qf }, ids, setzeIds: () => {}, nurAnzeigen: true }));
+    block.append(h('p', { class: 'feld-hinweis' }, `Kopie aus ${quelle ? (quelle.nr || quelle.id) : qk} – wird automatisch übernommen; ändern dort.`));
+    return block;
+  }
   if (feld.aus) {
     const w = G.wertVon(g, buch, kap.id, feld);
     block.append(h('p', { class: 'uebernommen' }, w ? String(w) : '(noch leer)', h('small', {}, ' – wird automatisch übernommen')));
@@ -490,17 +524,44 @@ function eingabe(g, buch, kap, feld, e, setzeWert) {
       zeichne();
       return box;
     }
-    case 'tabelle':
-      return tabelle(feld, e, setzeWert);
+    case 'tabelle': {
+      const key = G.feldKey(kap.id, feld.id);
+      const box = h('div', {}, tabelle(feld, e, setzeWert, { kontext: bildKontext(buch), key }));
+      markenHinweis(g, buch, key, box);
+      return box;
+    }
     case 'foto':
-    case 'skizze':
-      return h('p', { class: 'platzhalter' }, feld.art === 'foto' ? 'Fotos folgen in Etappe 3.' : 'Skizzen folgen in Etappe 3.');
+      return fotoFeld({ kontext: bildKontext(buch), feldKey: G.feldKey(kap.id, feld.id), ids: e.wert || [], setzeIds: setzeWert });
+    case 'skizze': {
+      let hinweisMarken = '';
+      if (feld.marken) {
+        const ziel = G.feldIndex(g).get(feld.marken);
+        if (ziel) hinweisMarken = `Nummerierte Marken in der Skizze sind mit der Tabelle „${ziel.feld.label}“ verknüpft.`;
+      }
+      return skizzenFeld({ kontext: bildKontext(buch), kap, feld, ids: e.wert || [], setzeIds: setzeWert, hinweisMarken });
+    }
     default:
       return h('p', { class: 'fehlertext' }, `Unbekannte Feldart: ${feld.art}`);
   }
 }
 
-function tabelle(feld, e, setzeWert) {
+// Ist die Tabelle mit den Marken einer Skizze verknüpft (Eingriffsstellen), wird angezeigt,
+// welche Nummern nur in der Tabelle oder nur in der Skizze stehen.
+async function markenHinweis(g, buch, tabellenKey, box) {
+  for (const [skKey, ort] of G.feldIndex(g)) {
+    if (ort.feld.marken !== tabellenKey) continue;
+    const skizzen = await ladeSkizzen((buch.werte[skKey] || {}).wert || []);
+    const zeilen = (buch.werte[tabellenKey] || {}).wert || [];
+    const a = eingriffsAbgleich(markenNummern(skizzen), zeilen);
+    const texte = [];
+    if (a.ohneMarke.length) texte.push(`Nr. ${a.ohneMarke.join(', ')} ist in der ${ort.feld.label} nicht markiert.`);
+    if (a.ohneZeile.length) texte.push(`Marke ${a.ohneZeile.join(', ')} der ${ort.feld.label} hat keine Zeile.`);
+    if (texte.length) box.prepend(h('div', { class: 'hinweis warnung' }, texte.join(' ')));
+  }
+}
+
+// bilder: { kontext, key } – nötig, wenn die Tabelle Fotos je Zeile hat (z. B. Unterlagen als Anlage).
+function tabelle(feld, e, setzeWert, bilder = null) {
   const box = h('div', { class: 'tabelle' });
   const zeilen = () => (Array.isArray(e.wert) ? e.wert : []);
   const zeichne = () => {
@@ -519,6 +580,13 @@ function tabelle(feld, e, setzeWert) {
             },
           })));
       }
+      if (feld.fotosJeZeile && bilder) {
+        karte.append(h('div', { class: 'feld klein' }, h('span', { class: 'feld-label' }, 'Foto der Unterlage (Anlage)'),
+          fotoFeld({
+            kontext: bilder.kontext, feldKey: bilder.key, ids: z.fotos || [],
+            setzeIds: (ids) => { z.fotos = ids; delete z._vorschlag; setzeWert([...zeilen()]); },
+          })));
+      }
       if (z._vorschlag) {
         karte.append(h('button', {
           class: 'knopf klein bestaetigen',
@@ -528,8 +596,9 @@ function tabelle(feld, e, setzeWert) {
       karte.append(h('button', {
         class: 'knopf klein gefahr',
         onclick: async () => {
-          if (G.zeileHatInhalt(feld, z) && !(await bestaetigen(`Zeile ${i + 1} löschen?`, 'Löschen', 'Abbrechen', true))) return;
+          if (G.zeileHatInhalt(feld, z) && !(await bestaetigen(`Zeile ${i + 1} löschen?${(z.fotos || []).length ? ' Die Fotos der Zeile werden mitgelöscht.' : ''}`, 'Löschen', 'Abbrechen', true))) return;
           setzeWert(zeilen().filter((x) => x !== z));
+          for (const fid of z.fotos || []) await db.loesche('fotos', fid);
           zeichne();
         },
       }, 'Zeile löschen'));
@@ -576,6 +645,13 @@ async function bildschirmEinstellungen() {
     }
   }
   main.append(stamm);
+
+  // Fotos
+  main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Fotos'),
+    h('label', { class: 'option' },
+      h('input', { type: 'checkbox', checked: !!es.standortFotos, onchange: (ev) => { es.standortFotos = ev.target.checked; speichereEinstellungen(); } }),
+      h('span', {}, 'Standort zu jedem Foto speichern (mit angezeigter Genauigkeit)')),
+    h('p', { class: 'feld-hinweis' }, 'Aus: kein Standort. An: Das Handy fragt einmal nach der Erlaubnis. Den Standort ermittelt Android; je nach Einstellung des Handys nutzt es dafür auch WLAN- und Mobilfunkdaten.')));
 
   // Vorlage
   const dateiInput = h('input', {

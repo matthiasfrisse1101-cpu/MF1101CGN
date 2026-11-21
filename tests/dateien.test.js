@@ -18,9 +18,17 @@ test('Alle Dateien des Offline-Speichers sind vorhanden', async () => {
 });
 
 test('Alle JS-Module stehen im Offline-Speicher', async () => {
-  const appJs = await (await fetch('../js/app.js')).text();
-  const importe = [...appJs.matchAll(/from '\.\/([^']+)'/g)].map((m) => `js/${m[1]}`);
-  for (const i of importe) wahr(sw.includes(`'${i}'`), `${i} fehlt in sw.js`);
+  // Alle Module, die von app.js aus (auch über Umwege) geladen werden.
+  const offen = ['app.js'], gesehen = new Set();
+  while (offen.length) {
+    const d = offen.pop();
+    if (gesehen.has(d)) continue;
+    gesehen.add(d);
+    const text = await (await fetch(`../js/${d}`)).text();
+    for (const m of text.matchAll(/from '\.\/([^']+)'/g)) offen.push(m[1]);
+  }
+  wahr(gesehen.size >= 8, `nur ${gesehen.size} Module gefunden`);
+  for (const d of gesehen) wahr(sw.includes(`'js/${d}'`), `js/${d} fehlt in sw.js`);
 });
 
 test('Manifest: Name, Symbole, Startbildschirm', async () => {

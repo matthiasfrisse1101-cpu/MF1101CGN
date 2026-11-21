@@ -61,3 +61,6 @@ export function mitwachsen(textarea) {
   requestAnimationFrame(anpassen);
   return textarea;
 }
+
+// Feld, zu dem nach dem Wechsel zurück ins Kapitel gescrollt wird (z. B. nach dem Zeichnen).
+export const sprungziel = { key: null };
