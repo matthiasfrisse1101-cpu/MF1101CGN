@@ -16,8 +16,8 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - `vorlagen_intern/` ist per `.gitignore` ausgeschlossen: Vorlage (docx), Musterbeckenbuch (doc), ARV Nr. 2, Auftrag.
 - Abgeleitete Gliederung (Entwurf): `vorlagen_intern/docs/etappe0_gliederung.md` (nur lokal, enthält Vorlagentexte).
 - Konzept mit Quellen: `docs/etappe1_konzept.md`.
-- Etappenberichte: `docs/etappe2_bericht.md`, `docs/etappe3_bericht.md`.
-- Echte Gliederung: `vorlagen_intern/gliederung_bestandsanlage.json` (nur lokal), Version 2026-11-21.
+- Etappenberichte: `docs/etappe2_bericht.md`, `docs/etappe3_bericht.md`, `docs/etappe4_bericht.md`.
+- Echte Gliederung: `vorlagen_intern/gliederung_bestandsanlage.json` (nur lokal), Version 2026-11-24.
 
 ## Technik (Kurz)
 - Kein Build. `js/app.js` (Bildschirme), `js/gliederung.js` (reine Logik, testbar), `js/db.js` (IndexedDB, Warteschlange, durability strict), `js/zahlen.js`, `sw.js` (Cache; auf localhost network-first).
@@ -27,6 +27,10 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - VERSION in `js/version.js` und `sw.js` gleich halten.
 - Fotos: Store `fotos` (Blob max. 2000 px + Vorschau), Feldwert = Liste der Foto-IDs; Nummer über `buch.fotoZaehler`. Tabellen mit `fotosJeZeile` speichern IDs in `zeile.fotos`.
 - Skizzen: Store `skizzen` mit `elemente` (strich/text/marke) in Skizzenpixeln, `grundlage` (Foto) und fertigem `bild`; Logik in `js/skizzenlogik.js` (testbar), Editor `js/skizzen.js`, Route `#/buch/ID/skizze/SID`.
+- Maße: Zahlfeld-Eintrag `{ wert: Wortlaut, mass: {art, zahl, einheit, a, b, umgerechnetAus, fuer} | null, herkunft }`; `mass` nur wenn eindeutig/bestätigt (`fuer` = Wortlaut, zu dem es gehört). Logik `js/zahlen.js` (leseMass), `js/masse.js`; Oberfläche `js/diktat.js`.
+- Sammeldiktat: `js/sammeldiktat.js` (werteAus, Stichwörter + Feldnamen, Satz→Tabellenzeile, Rest→Notiz); Text in `buch.sammeldiktate[kap]`, Notizen in `buch.notizen[kap]`.
+- Erstkontrolle: Feldart `pruefprotokoll` (C2.erstkontrolle) → `kapitel.protokoll` von A5_2 (Prüfpunkte A1–E4 aus der Vorlage); `js/protokoll.js`.
+- Service Worker: Installation mit `cache: 'reload'`; auf localhost `no-cache`. Beim Testen im Browser alte Module ggf. mit `fetch(url, {cache:'reload'})` auffrischen.
 - `marken` an einem Skizzenfeld verknüpft Marken mit einer Tabelle (Spalte `nr`); `aus` bei foto/skizze zeigt eine Kopie (A 8).
 
 ## Entscheidungen
@@ -39,6 +43,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 | 20.11.2026 | Anlagenart: Teilbauwerke auf dem Deckblatt sind führend; A 1 „Art des Bauwerks“ und A 5.2 „Art der Anlage“ werden als Vorschlag daraus abgeleitet und bestätigt | Wunsch des Nutzers |
 | 20.11.2026 | Optionale Abschnitte A 3, A 4.2, B 2 nach Musterbeckenbuch zuschaltbar | Auftrag v1.3 |
 | 21.11.2026 | Etappe 3: Fotos auf 2000 px verkleinert, Original nicht gespeichert (Vorschlag); Standort standardmäßig aus; Skizzen-Fußzeile „Handskizze, nicht maßstäblich“ (Vorschlag); Etappe 3 vor Veröffentlichung gebaut | Wunsch des Nutzers: erst Etappe 3, Upload später |
+| 24.11.2026 | Etappe 4: Zahlfelder mit Texttastatur (Diktat); Hauptmaße des Beckens in A 4.2 als Vorschlag der App; Erstkontrolle unter C 2 mit unverändertem Protokoll A 5.2; Notizen je Kapitel | Auftrag Funktionen 4–6, Etappe 5 braucht Maße |
 | 20.11.2026 | Etappe 1 freigegeben: Web-App ohne Build-Schritt; Bibliotheken pdfmake (PDF), easy-template-x (Word), JSZip (Sicherung) lokal; Speicher IndexedDB mit dauerhaftem Speicher; keine Browser-Spracherkennung; Sicherung per Download statt Teilen; Hosting GitHub Pages; Tests mit Node (eingebauter Test-Runner) | s. docs/etappe1_konzept.md |
 
 ## Offene Punkte
@@ -50,10 +55,12 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - [BELEG FEHLT]-Punkte aus dem Konzept: Daten nach Entfernen des App-Symbols, Betreff-Übernahme der Mail-App, IndexedDB-Dauerhaftigkeit, Offline-Diktat Deutsch am Gerät.
 - Vorschläge aus `vorlagen_intern/docs/etappe0_gliederung.md` (nur lokal, enthält Vorlagentexte) (Unklarheiten 2–5) bestätigen lassen: C 1-Intervall aus Teilbauwerken vorschlagen, beliebig viele Eingriffsstellen, hydraulische Daten als vorgeschlagene Zeilen, Feld „Wasserschutzzone“ als Vorschlag.
 - Beispiel eines fertig ausgefüllten Beckenbuchs (falls vorhanden).
+- Hauptmaße A 4.2 (Vorschlag) bestätigen; Gboard-Schreibweise gesprochener Zahlen am Gerät prüfen.
 
 ## Stand
 - Etappe 0 abgeschlossen (20.11.2026).
 - Etappe 1 abgeschlossen und freigegeben (20.11.2026).
 - Etappe 2 abgeschlossen (20.11.2026).
-- Etappe 3 abgeschlossen (21.11.2026), wartet auf „weiter“. Nächster Schritt: Etappe 4 – Diktat, Sammeldiktat, Maße, A 3/A 4.2/B 2, Erstkontrolle A 5.2.
+- Etappe 3 abgeschlossen (21.11.2026).
+- Etappe 4 abgeschlossen (24.11.2026), wartet auf „weiter“. Nächster Schritt: Etappe 5 – Lageplan- und Schnittskizzen aus Maßen (Hauptmaße A 4.2 vom Nutzer bestätigen lassen).
 - Veröffentlichung: Repository `matthiasfrisse1101-cpu/MF1101CGN` ist noch leer; Push braucht Token des Nutzers im Terminal (nie im Chat).

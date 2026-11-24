@@ -25,12 +25,12 @@ test('Prüfung: unbekanntes Teilbauwerk in sichtbarWenn', () => {
 });
 
 test('Sichtbarkeit: Kapitel nur bei Teilbauwerk', () => {
-  gleich(G.sichtbareKapitel(testG, leeresBuch()).map((k) => k.id), ['T1', 'T2']);
-  gleich(G.sichtbareKapitel(testG, leeresBuch({ teilbauwerke: ['testschacht'] })).map((k) => k.id), ['T1', 'T2', 'T4']);
+  gleich(G.sichtbareKapitel(testG, leeresBuch()).map((k) => k.id), ['T1', 'T2', 'T5']);
+  gleich(G.sichtbareKapitel(testG, leeresBuch({ teilbauwerke: ['testschacht'] })).map((k) => k.id), ['T1', 'T2', 'T4', 'T5']);
 });
 
 test('Sichtbarkeit: zuschaltbares Kapitel', () => {
-  gleich(G.sichtbareKapitel(testG, leeresBuch({ zugeschaltet: ['T3'] })).map((k) => k.id), ['T1', 'T2', 'T3']);
+  gleich(G.sichtbareKapitel(testG, leeresBuch({ zugeschaltet: ['T3'] })).map((k) => k.id), ['T1', 'T2', 'T3', 'T5']);
 });
 
 test('Sichtbarkeit: Feld nur bei Testwand', () => {
@@ -67,7 +67,7 @@ test('Fortschritt zählt nur sichtbare Felder', () => {
   b.werte['T1.laenge'] = { wert: '', status: 'offen' };
   b.werte['T1.datum'] = { wert: '', status: 'aus_akten' };
   const r = G.kapitelFortschritt(testG, b, kap(testG, 'T1'));
-  gleich([r.gesamt, r.geklaert, r.offen, r.aus_akten, r.pflichtLeer], [9, 1, 1, 1, 0]);
+  gleich([r.gesamt, r.geklaert, r.offen, r.aus_akten, r.pflichtLeer], [10, 1, 1, 1, 0]);
 });
 
 test('Mindestumfang', () => {
@@ -139,6 +139,28 @@ test('Tabellenzeile mit Foto der Unterlage zählt als Inhalt', () => {
   wahr(G.zeileHatInhalt(f, { id: 'z', fotos: ['f-1'] }));
 });
 
+test('Prüfung: Prüfprotokoll braucht Kapitel mit Protokoll', () => {
+  const g = structuredClone(testG);
+  feld(g, 'T5', 'kontrolle').protokoll = 'T1';
+  wahr(G.pruefeGliederung(g).some((t) => t.includes('Protokoll')), 'fehlendes Protokoll nicht erkannt');
+});
+
+test('Prüfprotokoll: leer bis ein Punkt oder das Datum erfasst ist', () => {
+  const f = feld(testG, 'T5', 'kontrolle');
+  wahr(G.istLeer(f, { punkte: {} }), 'leeres Protokoll gilt nicht als leer');
+  wahr(!G.istLeer(f, { punkte: { 'A.1': { ergebnis: 'ok' } } }), 'Punkt zählt nicht');
+  wahr(!G.istLeer(f, { datum: '2026-11-24', punkte: {} }), 'Datum zählt nicht');
+});
+
+test('Fortschritt: Zahlfelder mit nicht bestätigtem Wert sind „zur Prüfung“', () => {
+  const b = leeresBuch();
+  b.werte['T1.laenge'] = { wert: 'etwa wie der Zaun', mass: null };
+  b.werte['T1.neigung'] = { wert: '1 zu 2', mass: { art: 'verhaeltnis', a: 1, b: 2, zahl: 2 } };
+  const r = G.kapitelFortschritt(testG, b, kap(testG, 'T1'));
+  gleich(r.pruefen, 1);
+  gleich(G.feldStatus(testG, b, 'T1', feld(testG, 'T1', 'laenge')), 'erfasst', 'Wortlaut bleibt als erfasster Text');
+});
+
 // Echte Gliederung – nur lokal vorhanden (vorlagen_intern ist nicht im Repository).
 const echt = await fetch('../vorlagen_intern/gliederung_bestandsanlage.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
 if (echt) {
@@ -152,6 +174,15 @@ if (echt) {
     gleich(f('A4_1', 'funktionsskizze').marken, 'A4_1.eingriffsstellen');
     gleich(f('A8', 'funktionsskizze_kopie').aus, 'A4_1.funktionsskizze');
     wahr(f('B1', 'unterlagen').fotosJeZeile && f('B4', 'plaene').fotosJeZeile, 'Fotos je Zeile fehlen');
+  });
+  test('Echte Gliederung: Protokoll A 5.2 mit Prüfpunkten A 1 bis E 4, Erstkontrolle in C 2', () => {
+    const p = echt.kapitel.find((k) => k.id === 'A5_2').protokoll;
+    gleich(p.gruppen.map((x) => `${x.id}${x.punkte.length}`), ['A6', 'B3', 'C9', 'D6', 'E4']);
+    gleich(echt.kapitel.find((k) => k.id === 'C2').felder.find((f) => f.id === 'erstkontrolle').protokoll, 'A5_2');
+  });
+  test('Echte Gliederung: Hauptmaße in A 4.2 sind als Vorschlag gekennzeichnet', () => {
+    const fs = echt.kapitel.find((k) => k.id === 'A4_2').felder.filter((f) => f.art === 'zahl');
+    wahr(fs.length >= 6 && fs.every((f) => f.vorschlag), 'Hauptmaße fehlen oder sind nicht als Vorschlag markiert');
   });
   test('Echte Gliederung: Musterbeckenbuch-Abschnitte sind zuschaltbar', () => {
     for (const id of ['A3', 'A4_2', 'B2']) wahr(echt.kapitel.find((k) => k.id === id).zuschaltbar, `${id} nicht zuschaltbar`);

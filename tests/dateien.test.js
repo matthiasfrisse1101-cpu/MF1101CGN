@@ -31,6 +31,10 @@ test('Alle JS-Module stehen im Offline-Speicher', async () => {
   for (const d of gesehen) wahr(sw.includes(`'js/${d}'`), `js/${d} fehlt in sw.js`);
 });
 
+test('Service Worker holt Dateien beim Installieren frisch vom Server', () => {
+  wahr(sw.includes("cache: 'reload'"), 'Installation könnte veraltete Dateien aus dem Browser-Zwischenspeicher übernehmen');
+});
+
 test('Manifest: Name, Symbole, Startbildschirm', async () => {
   const m = await (await fetch('../manifest.webmanifest')).json();
   gleich(m.display, 'standalone');

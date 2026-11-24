@@ -1,7 +1,7 @@
 {
   "format": 1,
   "vorlage": "TESTVORLAGE – keine echte Dienststellen-Vorlage",
-  "version": "test-2026-11-21",
+  "version": "test-2026-11-24",
   "testdaten": true,
   "hinweise": "Dies ist eine Test-Gliederung mit erfundenen Feldern. Für echte Beckenbücher laden Sie unter Einstellungen das Vorlagenpaket Ihrer Dienststelle.",
   "teilbauwerke": [
@@ -29,6 +29,7 @@
         { "id": "pflichttext", "label": "Test-Pflichttext", "art": "text", "pflicht": true, "ort": "vor_ort", "stichwoerter": ["pflicht"] },
         { "id": "langtext", "label": "Test-Langtext", "art": "langtext", "ort": "vor_ort", "hinweis": "Testhinweis zum Feld" },
         { "id": "laenge", "label": "Test-Länge", "art": "zahl", "einheit": "m", "ort": "vor_ort", "stichwoerter": ["länge"] },
+        { "id": "neigung", "label": "Test-Neigung", "art": "zahl", "format": "verhaeltnis", "einheit": "1:n", "ort": "vor_ort", "stichwoerter": ["neigung", "böschung"] },
         { "id": "datum", "label": "Test-Datum", "art": "datum", "ort": "akten" },
         { "id": "auswahl", "label": "Test-Auswahl", "art": "auswahl", "optionen": ["Option A", "Option B"], "ort": "vor_ort" },
         { "id": "mehrfach", "label": "Test-Mehrfachauswahl", "art": "mehrfach", "optionen": ["Eins", "Zwei", "Drei"], "ort": "vor_ort" },
@@ -73,6 +74,26 @@
       "sichtbarWenn": { "teilbauwerk": ["testschacht"] },
       "felder": [
         { "id": "tiefe", "label": "Test-Tiefe", "art": "zahl", "einheit": "m", "ort": "vor_ort" }
+      ]
+    },
+    {
+      "id": "T5",
+      "nr": "T 5",
+      "titel": "Testkapitel Protokoll",
+      "teil": "C",
+      "protokoll": {
+        "arten": ["Testkontrolle", "Außerplanmäßige Testkontrolle, weil"],
+        "witterung": ["Testwetter trocken", "Sonstige"],
+        "anlagenarten": ["Testbecken (Testart)", "Sonstiges:"],
+        "gruppen": [
+          { "id": "A", "titel": "Testgruppe A", "punkte": [ { "nr": "1", "text": "Testpunkt A 1" }, { "nr": "2", "text": "*Testpunkt A 2" } ] },
+          { "id": "B", "titel": "Testgruppe B", "punkte": [ { "nr": "1", "text": "Testpunkt B 1" } ] }
+        ],
+        "behebung": ["Test-AM", "Test-NL"],
+        "fussnote": "*: Testfußnote"
+      },
+      "felder": [
+        { "id": "kontrolle", "label": "Test-Erstkontrolle", "art": "pruefprotokoll", "protokoll": "T5", "ort": "vor_ort" }
       ]
     }
   ]

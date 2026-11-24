@@ -1,6 +1,6 @@
 // Service Worker: speichert die App-Dateien, damit die App ohne Netz startet.
 // Bei jeder Veröffentlichung VERSION erhöhen (gleich wie in js/version.js).
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 const CACHE = `beckenbuch-${VERSION}`;
 const DATEIEN = [
   './',
@@ -16,6 +16,10 @@ const DATEIEN = [
   'js/fotos.js',
   'js/skizzen.js',
   'js/skizzenlogik.js',
+  'js/masse.js',
+  'js/sammeldiktat.js',
+  'js/diktat.js',
+  'js/protokoll.js',
   'js/version.js',
   'gliederung/test-gliederung.json',
   'icons/icon-192.png',
@@ -24,7 +28,9 @@ const DATEIEN = [
 ];
 
 self.addEventListener('install', (ev) => {
-  ev.waitUntil(caches.open(CACHE).then((c) => c.addAll(DATEIEN)));
+  // cache: 'reload' – frisch vom Server holen, nicht aus dem HTTP-Zwischenspeicher des Browsers
+  // (sonst könnte eine neue Version alte Dateien enthalten).
+  ev.waitUntil(caches.open(CACHE).then((c) => c.addAll(DATEIEN.map((d) => new Request(d, { cache: 'reload' })))));
 });
 
 self.addEventListener('activate', (ev) => {
@@ -49,7 +55,7 @@ self.addEventListener('fetch', (ev) => {
   if (url.origin !== self.location.origin) return;
   const ausSpeicher = () => caches.match(ev.request, { ignoreSearch: true });
   if (ENTWICKLUNG) {
-    ev.respondWith(fetch(ev.request).catch(() => ausSpeicher().then((t) => t || Response.error())));
+    ev.respondWith(fetch(ev.request.url, { cache: 'no-cache' }).catch(() => ausSpeicher().then((t) => t || Response.error())));
   } else {
     ev.respondWith(ausSpeicher().then((t) => t || fetch(ev.request)));
   }

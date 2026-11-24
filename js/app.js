@@ -2,12 +2,13 @@
 import * as db from './db.js';
 import * as G from './gliederung.js';
 import { h, leere, meldung, bestaetigen, datumDE, mitwachsen, sprungziel } from './ui.js';
-import { leseDezimal } from './zahlen.js';
 import { VERSION } from './version.js';
 import { fotoFeld } from './fotos.js';
 import { skizzenFeld, bildschirmSkizze, ladeSkizzen } from './skizzen.js';
 import { eingriffsAbgleich, markenNummern } from './skizzenlogik.js';
 import { urlsFreigeben } from './bilder.js';
+import { massFeld, sammeldiktatBox, notizBox } from './diktat.js';
+import { protokollFeld } from './protokoll.js';
 
 const app = document.getElementById('app');
 const zustand = {
@@ -256,6 +257,7 @@ async function bildschirmBuch(id) {
     const teile = [`${f.geklaert}/${f.gesamt} geklärt`];
     if (f.offen) teile.push(`${f.offen} offen`);
     if (f.aus_akten) teile.push(`${f.aus_akten} aus Akten`);
+    if (f.pruefen) teile.push(`${f.pruefen} zur Prüfung`);
     liste.append(h('a', { class: `kapitel-zeile ${f.geklaert === f.gesamt ? 'fertig' : ''}`, href: `#/buch/${encodeURIComponent(buch.id)}/kapitel/${encodeURIComponent(k.id)}` },
       h('span', { class: 'kap-nr' }, k.nr || ''),
       h('span', { class: 'kap-titel' }, k.titel, f.pflichtLeer ? h('span', { class: 'pflicht-marke' }, ` · ${f.pflichtLeer} Pflicht leer`) : null),
@@ -363,7 +365,13 @@ async function bildschirmKapitel(buchId, kapId) {
     }));
   }
 
-  for (const feld of G.sichtbareFelder(kap, buch)) main.append(feldBlock(g, buch, kap, feld));
+  const felder = G.sichtbareFelder(kap, buch);
+  const neuZeichnen = async () => { const y = window.scrollY; await bildschirmKapitel(buchId, kapId); window.scrollTo(0, y); };
+  if (felder.some((f) => !f.aus && !['foto', 'skizze', 'pruefprotokoll'].includes(f.art))) {
+    main.append(sammeldiktatBox({ buch, kap, felder, aendern, neuZeichnen }));
+  }
+  for (const feld of felder) main.append(feldBlock(g, buch, kap, feld));
+  main.append(notizBox(buch, kap, aendern));
 
   const naechstes = kapitelListe[idx + 1];
   app.append(
@@ -394,7 +402,7 @@ function feldBlock(g, buch, kap, feld) {
   if (feld.ort === 'akten') marken.push(h('span', { class: 'marke' }, 'Akten'));
   if (feld.ort === 'stammdaten') marken.push(h('span', { class: 'marke' }, 'aus Stammdaten'));
 
-  block.append(h('div', { class: 'feld-kopf' }, h('span', { class: 'feld-label' }, feld.label, feld.einheit ? ` [${feld.einheit}]` : ''), ...marken));
+  block.append(h('div', { class: 'feld-kopf' }, h('span', { class: 'feld-label' }, feld.label, feld.einheit && feld.einheit !== '1:n' ? ` [${feld.einheit}]` : ''), ...marken));
   if (feld.hinweis) block.append(h('p', { class: 'feld-hinweis' }, feld.hinweis));
 
   // Feld, das nur einen anderen Wert anzeigt
@@ -467,16 +475,10 @@ function eingabe(g, buch, kap, feld, e, setzeWert) {
     }
     case 'langtext':
       return mitwachsen(h('textarea', { rows: 3, oninput: (ev) => setzeWert(ev.target.value) }, e.wert ?? ''));
-    case 'zahl': {
-      const warn = h('div', { class: 'feld-warnung' });
-      const pruefe = (t) => { warn.textContent = t.trim() && leseDezimal(t) === null ? 'Keine Zahl erkannt – bitte prüfen (Dezimalkomma, z. B. 2,40).' : ''; };
-      const inp = h('input', {
-        type: 'text', inputmode: 'decimal', value: e.wert ?? '', autocomplete: 'off',
-        oninput: (ev) => { pruefe(ev.target.value); setzeWert(ev.target.value); },
-      });
-      pruefe(String(e.wert ?? ''));
-      return h('div', { class: 'zahl-zeile' }, inp, feld.einheit ? h('span', { class: 'einheit' }, feld.einheit) : null, warn);
-    }
+    case 'zahl':
+      return massFeld(feld, e, setzeWert);
+    case 'pruefprotokoll':
+      return protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext: bildKontext(buch), erfasser: zustand.einstellungen.erfasser });
     case 'auswahl': {
       const box = h('div', { class: 'optionen' });
       const zeichne = () => {

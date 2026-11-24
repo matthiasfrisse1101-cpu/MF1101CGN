@@ -1,5 +1,6 @@
 // Logik rund um die Gliederung (Vorlage) und den Bearbeitungsstand eines Beckenbuchs.
 // Reine Funktionen ohne Bildschirm und ohne Speicher – deshalb automatisch testbar.
+import { massZustand } from './masse.js';
 
 export const STATUS = {
   erfasst: 'erfasst',
@@ -16,7 +17,7 @@ export const HAND_STATUS = ['nicht_vorhanden', 'nicht_zugaenglich', 'offen', 'au
 // Diese Status gelten als „geklärt“ für den Fortschritt.
 const GEKLAERT = new Set(['erfasst', 'nicht_vorhanden', 'nicht_zugaenglich']);
 
-export const FELDARTEN = ['text', 'langtext', 'zahl', 'datum', 'auswahl', 'mehrfach', 'janein', 'foto', 'skizze', 'tabelle'];
+export const FELDARTEN = ['text', 'langtext', 'zahl', 'datum', 'auswahl', 'mehrfach', 'janein', 'foto', 'skizze', 'tabelle', 'pruefprotokoll'];
 
 export const BUCH_STAND = {
   in_arbeit: 'in Arbeit',
@@ -80,6 +81,11 @@ export function pruefeGliederung(g) {
         else if (t.art !== 'tabelle' || !(t.spalten || []).some((s) => s.id === 'nr')) fehler.push(`${wo}: "marken" muss auf eine Tabelle mit Spalte "nr" zeigen.`);
       }
       if (f.fotosJeZeile && f.art !== 'tabelle') fehler.push(`${wo}: "fotosJeZeile" gibt es nur bei Tabellen.`);
+      if (f.art === 'pruefprotokoll') {
+        const pk = (g.kapitel || []).find((x) => x.id === f.protokoll);
+        if (!pk || !pk.protokoll || !Array.isArray(pk.protokoll.gruppen)) fehler.push(`${wo}: "protokoll" muss auf ein Kapitel mit Protokoll (gruppen) zeigen.`);
+      }
+      if (f.format && !['verhaeltnis', 'dn'].includes(f.format)) fehler.push(`${wo}: unbekanntes "format" "${f.format}".`);
     }
   }
   for (const m of g.mindestumfang || []) {
@@ -126,6 +132,8 @@ export function istLeer(feld, wert) {
       return !Array.isArray(wert) || wert.length === 0;
     case 'tabelle':
       return !Array.isArray(wert) || !wert.some((z) => zeileHatInhalt(feld, z));
+    case 'pruefprotokoll':
+      return typeof wert !== 'object' || (!wert.datum && Object.keys(wert.punkte || {}).length === 0);
     default:
       return String(wert).trim() === '';
   }
@@ -156,9 +164,10 @@ export function feldStatus(g, buch, kapitelId, feld) {
 
 export function kapitelFortschritt(g, buch, kapitel) {
   const felder = sichtbareFelder(kapitel, buch).filter((f) => !f.aus);
-  const r = { gesamt: felder.length, geklaert: 0, offen: 0, aus_akten: 0, leer: 0, pflichtLeer: 0 };
+  const r = { gesamt: felder.length, geklaert: 0, offen: 0, aus_akten: 0, leer: 0, pflichtLeer: 0, pruefen: 0 };
   for (const f of felder) {
     const st = feldStatus(g, buch, kapitel.id, f);
+    if (f.art === 'zahl' && massZustand(f, (buch.werte || {})[feldKey(kapitel.id, f.id)]) === 'pruefen') r.pruefen++;
     if (GEKLAERT.has(st)) r.geklaert++;
     else if (st === 'offen') r.offen++;
     else if (st === 'aus_akten') r.aus_akten++;
