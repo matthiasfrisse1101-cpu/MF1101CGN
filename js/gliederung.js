@@ -246,10 +246,15 @@ export function neuesBeckenbuch(g, stammdaten, angaben, jetzt = new Date().toISO
   };
   const setze = (key, wert) => { buch.werte[key] = { wert, status: null, geaendert: jetzt }; };
   const deck = g.kapitel.find((k) => k.id === 'DECK');
-  if (deck) {
-    if (angaben.name && deck.felder.some((f) => f.id === 'name')) setze('DECK.name', angaben.name);
-    if (angaben.bauwerksnr && deck.felder.some((f) => f.id === 'bauwerksnr')) setze('DECK.bauwerksnr', angaben.bauwerksnr);
-  }
+  const hatFeld = (id) => !!deck && (deck.felder || []).some((f) => f.id === id);
+  if (angaben.name && hatFeld('name')) setze('DECK.name', angaben.name);
+  if (angaben.bauwerksnr && hatFeld('bauwerksnr')) setze('DECK.bauwerksnr', angaben.bauwerksnr);
+  // Rückfall: Hat die Gliederung (z. B. die Test-Gliederung) kein Deckblattfeld dafür,
+  // merkt sich das Beckenbuch Name und Bauwerksnummer selbst, damit nichts verloren geht.
+  buch.kopf = {
+    name: !hatFeld('name') && angaben.name ? angaben.name.trim() : '',
+    bauwerksnr: !hatFeld('bauwerksnr') && angaben.bauwerksnr ? angaben.bauwerksnr.trim() : '',
+  };
   // Stammdaten übernehmen (Kopie – später im Beckenbuch änderbar)
   for (const k of g.kapitel) {
     for (const f of k.felder || []) {
@@ -275,12 +280,12 @@ export function neuesBeckenbuch(g, stammdaten, angaben, jetzt = new Date().toISO
 
 export function buchName(buch) {
   const e = buch.werte && buch.werte['DECK.name'];
-  return (e && e.wert) || 'Ohne Namen';
+  return (e && e.wert) || (buch.kopf && buch.kopf.name) || 'Ohne Namen';
 }
 
 export function buchBauwerksnr(buch) {
   const e = buch.werte && buch.werte['DECK.bauwerksnr'];
-  return (e && e.wert) || '';
+  return (e && e.wert) || (buch.kopf && buch.kopf.bauwerksnr) || '';
 }
 
 // Hinweis „nicht gesichert“: geändert nach letzter Sicherung bzw. letztem Versand.

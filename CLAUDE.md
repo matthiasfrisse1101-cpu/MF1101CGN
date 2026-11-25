@@ -63,4 +63,5 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - Etappe 2 abgeschlossen (20.11.2026).
 - Etappe 3 abgeschlossen (21.11.2026).
 - Etappe 4 abgeschlossen (24.11.2026), wartet auf „weiter“. Nächster Schritt: Etappe 5 – Lageplan- und Schnittskizzen aus Maßen (Hauptmaße A 4.2 vom Nutzer bestätigen lassen).
-- Veröffentlichung: Repository `matthiasfrisse1101-cpu/MF1101CGN` ist noch leer; Push braucht Token des Nutzers im Terminal (nie im Chat).
+- Veröffentlichung: Stand Etappe 4 liegt in `matthiasfrisse1101-cpu/MF1101CGN` (main). GitHub Pages muss der Nutzer einschalten (Settings → Pages → main, /root) → https://matthiasfrisse1101-cpu.github.io/MF1101CGN/
+- 25.11.2026: Handy-Probelauf (emuliert, Pixel 7): Fehler behoben – ohne Deckblattfeld gingen Name/Bauwerksnr. verloren; jetzt Rückfall `buch.kopf` (Version 0.4.1).

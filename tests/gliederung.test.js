@@ -88,6 +88,18 @@ test('Neues Beckenbuch: Name, Stammdaten, Vorschlagszeilen', () => {
   gleich(b.teilbauwerke, ['testbecken']);
   gleich(b.vorlage.testdaten, true);
   gleich(b.stand, 'in_arbeit');
+  // Test-Gliederung hat kein Deckblatt: Name und Nummer dürfen trotzdem nicht verloren gehen.
+  gleich(G.buchName(b), 'RRB Teststraße');
+  gleich(G.buchBauwerksnr(b), '0000000');
+});
+
+test('Neues Beckenbuch mit Deckblatt: Name steht im Feld, nicht doppelt', () => {
+  const g = structuredClone(testG);
+  g.kapitel.unshift({ id: 'DECK', nr: 'D', titel: 'Deckblatt', felder: [{ id: 'name', label: 'Name', art: 'text' }, { id: 'bauwerksnr', label: 'Nr.', art: 'text' }] });
+  const b = G.neuesBeckenbuch(g, {}, { name: 'RRB X', bauwerksnr: '123', teilbauwerke: [] });
+  gleich(b.werte['DECK.name'].wert, 'RRB X');
+  gleich(b.kopf.name, '');
+  gleich(G.buchName(b), 'RRB X');
 });
 
 test('Vorschlag aus Teilbauwerken', () => {
