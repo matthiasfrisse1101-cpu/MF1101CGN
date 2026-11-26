@@ -20,6 +20,9 @@ Web-App fürs Handy (Android/Chrome), mit der bestehende Entwässerungsanlagen a
 | `tests/` | automatische Tests (`tests/run.html` im Browser öffnen) |
 | `vorlagen_intern/` | dienstliche Vorlagen und echte Gliederung – **nicht im Repository** |
 
+## Desktop-Testversion (ohne Server)
+`desktop/Beckenbuch-Desktop-Test.html` herunterladen und per Doppelklick in Chrome oder Edge öffnen. Enthält die ganze App mit der Test-Gliederung in einer Datei; Daten bleiben im Browser dieses Rechners. Neu erzeugen nach Änderungen: `python3 tools/desktop_bauen.py`.
+
 ## Lokal starten
 ```bash
 python3 -m http.server 8123 --bind 127.0.0.1

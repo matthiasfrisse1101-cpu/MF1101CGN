@@ -30,7 +30,9 @@ async function start() {
   zustand.einstellungen = (await db.lese('einstellungen', 'einstellungen')) || {
     id: 'einstellungen', erfasser: '', stammdaten: {}, aktiveVorlage: null,
   };
-  zustand.testGliederung = await (await fetch('gliederung/test-gliederung.json')).json();
+  // Die Desktop-Testversion (eine einzige HTML-Datei) bringt die Test-Gliederung selbst mit.
+  zustand.testGliederung = window.BECKENBUCH_TESTGLIEDERUNG
+    || await (await fetch('gliederung/test-gliederung.json')).json();
 
   // Dauerhaften Speicher beantragen (Chrome entscheidet ohne Rückfrage).
   db.dauerhaftBeantragen().catch(() => {});
@@ -708,6 +710,7 @@ async function bildschirmEinstellungen() {
 // ---------- Offline-Betrieb ----------
 function registriereServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
+  if (location.protocol === 'file:') return; // Desktop-Testversion: Datei liegt ohnehin lokal
   navigator.serviceWorker.register('sw.js').then((reg) => {
     reg.addEventListener('updatefound', () => {
       const neu = reg.installing;

@@ -21,6 +21,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 
 ## Technik (Kurz)
 - Kein Build. `js/app.js` (Bildschirme), `js/gliederung.js` (reine Logik, testbar), `js/db.js` (IndexedDB, Warteschlange, durability strict), `js/zahlen.js`, `sw.js` (Cache; auf localhost network-first).
+- Desktop-Testversion: `python3 tools/desktop_bauen.py` → `desktop/Beckenbuch-Desktop-Test.html` (eine Datei, file://, kein Service Worker, Test-Gliederung eingebettet). Nach jeder Code-Änderung neu erzeugen.
 - Tests: `tests/run.html` im Browser (eigener Mini-Rahmen `tests/harness.js`), solange Node fehlt.
 - Lokaler Server: `python3 -m http.server 8123 --bind 127.0.0.1` im App-Ordner (Desktop-Zugriff: aus der Bash starten, nicht über launch.json).
 - Beispielzeilen aus `vorschlagZeilen` tragen `_vorschlag: true` und zählen erst nach Bestätigung.

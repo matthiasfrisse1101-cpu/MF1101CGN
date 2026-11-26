@@ -1,0 +1,3155 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beckenbuch – Desktop-Test 0.4.1</title>
+<!-- Automatisch erzeugt mit tools/desktop_bauen.py – nicht von Hand ändern. -->
+<style>
+/* Beckenbuch – Gestaltung für den Außeneinsatz: groß, kontrastreich, Hochformat, einhändig. */
+:root {
+  --text: #111;
+  --grund: #fff;
+  --flaeche: #f1f3f5;
+  --linie: #5c6670;
+  --primaer: #0b3d6b;
+  --primaer-text: #fff;
+  --gefahr: #a1001b;
+  --ok: #17602a;
+  --warn-grund: #fff3c4;
+  --warn-text: #5a3d00;
+  --abstand: 16px;
+  --knopf-hoehe: 56px;
+  font-size: 18px;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--grund);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.4;
+}
+a { color: var(--primaer); }
+
+/* Kopf */
+.kopf {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--primaer); color: var(--primaer-text);
+  padding: 8px 12px; min-height: 60px;
+}
+.kopf h1 { flex: 1; font-size: 1.15rem; margin: 0; line-height: 1.2; overflow-wrap: anywhere; }
+.zurueck, .zurueck-platz {
+  width: 48px; height: 48px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--primaer-text); text-decoration: none; font-size: 2.2rem; line-height: 1;
+}
+button.zurueck { background: none; border: 0; padding: 0; font-family: inherit; cursor: pointer; }
+.speicheranzeige { font-size: .75rem; opacity: .9; white-space: nowrap; }
+
+main { padding: var(--abstand); padding-bottom: 120px; max-width: 720px; margin: 0 auto; }
+
+/* Fuß mit Hauptaktionen – unten, mit dem Daumen erreichbar */
+.fuss {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  display: flex; gap: 10px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: var(--grund); border-top: 2px solid var(--linie);
+}
+.fuss > * { flex: 1; }
+
+/* Knöpfe */
+.knopf, button.knopf {
+  display: inline-flex; align-items: center; justify-content: center; text-align: center;
+  min-height: var(--knopf-hoehe); padding: 8px 14px;
+  border: 2px solid var(--primaer); border-radius: 10px;
+  background: var(--grund); color: var(--primaer);
+  font: inherit; font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.knopf.primaer { background: var(--primaer); color: var(--primaer-text); }
+.knopf.gefahr { border-color: var(--gefahr); color: var(--gefahr); }
+.knopf.breit { display: flex; width: 100%; margin: 10px 0; }
+.knopf.klein { min-height: 44px; padding: 4px 12px; font-size: .9rem; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #ffb000; outline-offset: 2px; }
+
+/* Listen */
+.karte {
+  display: block; padding: 14px; margin-bottom: 12px;
+  border: 2px solid var(--linie); border-radius: 12px; color: var(--text); text-decoration: none;
+}
+.karte-titel { font-size: 1.15rem; font-weight: 700; }
+.karte-zeile { margin-top: 4px; }
+.marke {
+  display: inline-block; margin: 6px 6px 0 0; padding: 2px 8px;
+  border: 1px solid var(--linie); border-radius: 6px; font-size: .8rem; background: var(--flaeche);
+}
+.marke.warnmarke, .marke.pflicht { background: var(--warn-grund); color: var(--warn-text); border-color: var(--warn-text); }
+.stand { font-weight: 700; }
+.stand-vollstaendig, .stand-versendet { color: var(--ok); }
+.leer { color: #444; font-style: italic; }
+
+.abschnitt { margin: 0 0 24px; }
+.abschnitt h2, details summary h2 { font-size: 1.05rem; margin: 0 0 8px; display: inline; }
+details summary { cursor: pointer; padding: 6px 0; }
+
+.kapitel-zeile {
+  display: grid; grid-template-columns: 4.2em 1fr; gap: 2px 8px;
+  padding: 12px; margin-bottom: 8px; border: 2px solid var(--linie); border-radius: 10px;
+  color: var(--text); text-decoration: none; min-height: var(--knopf-hoehe);
+}
+.kapitel-zeile.fertig { border-color: var(--ok); }
+.kap-nr { font-weight: 700; }
+.kap-titel { font-weight: 600; }
+.kap-stand { grid-column: 2; font-size: .85rem; color: #333; }
+.pflicht-marke { color: var(--warn-text); font-weight: 400; font-size: .85rem; }
+
+.mindest { list-style: none; padding: 0; margin: 8px 0 0; }
+.mindest li { padding: 6px 0; border-bottom: 1px solid #ccc; }
+.mindest .ok { color: var(--ok); }
+.mindest .fehlt { color: var(--gefahr); font-weight: 600; }
+
+.segment { display: flex; gap: 6px; flex-wrap: wrap; }
+.segment button {
+  flex: 1 1 30%; min-height: var(--knopf-hoehe); border: 2px solid var(--primaer); border-radius: 10px;
+  background: var(--grund); color: var(--primaer); font: inherit; font-weight: 600;
+}
+.segment button.aktiv { background: var(--primaer); color: var(--primaer-text); }
+
+/* Hinweise */
+.hinweis { background: var(--flaeche); border-left: 6px solid var(--linie); padding: 10px 12px; margin: 0 0 16px; border-radius: 6px; }
+.hinweis.warnung { background: var(--warn-grund); color: var(--warn-text); border-color: var(--warn-text); }
+.festtext { color: #333; border-left: 4px solid #bbb; padding-left: 10px; font-size: .95rem; }
+.fehlertext { color: var(--gefahr); font-weight: 600; }
+.platzhalter { color: #555; font-style: italic; }
+
+/* Felder */
+.feldblock { padding: 14px 0; border-bottom: 2px solid #d7dbe0; }
+.feld-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-bottom: 6px; }
+.feld-label { font-weight: 700; display: block; }
+.feld-hinweis { margin: 0 0 8px; font-size: .9rem; color: #333; font-style: italic; }
+.feld { display: block; margin-bottom: 14px; }
+.feld.klein { margin-bottom: 8px; }
+.feld.klein .feld-label { font-weight: 600; font-size: .9rem; }
+
+input[type=text], input[type=date], textarea {
+  width: 100%; min-height: var(--knopf-hoehe); padding: 10px 12px;
+  border: 2px solid var(--linie); border-radius: 10px; font: inherit; color: var(--text); background: var(--grund);
+}
+textarea { resize: vertical; min-height: 96px; }
+.zahl-zeile { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.zahl-zeile input { flex: 1; min-width: 0; }
+.einheit { font-weight: 700; min-width: 2.5em; }
+.feld-warnung { flex-basis: 100%; color: var(--gefahr); font-size: .9rem; }
+.feld-warnung:empty { display: none; }
+.uebernommen { background: var(--flaeche); padding: 10px; border-radius: 8px; margin: 0; }
+.vorschlag { margin-top: 8px; padding: 8px; background: var(--warn-grund); color: var(--warn-text); border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.optionen { display: flex; flex-direction: column; gap: 8px; }
+.optionen.zwei { flex-direction: row; }
+.optionen.zwei .option-knopf { flex: 1; }
+.option-knopf {
+  min-height: var(--knopf-hoehe); padding: 8px 12px; text-align: left;
+  border: 2px solid var(--linie); border-radius: 10px; background: var(--grund); color: var(--text); font: inherit;
+}
+.option-knopf.aktiv { background: var(--primaer); color: var(--primaer-text); border-color: var(--primaer); font-weight: 700; }
+
+.gruppe { border: 2px solid var(--linie); border-radius: 12px; padding: 8px 12px 12px; margin: 0 0 16px; }
+.gruppe legend { font-weight: 700; padding: 0 6px; }
+.option { display: flex; align-items: center; gap: 12px; min-height: var(--knopf-hoehe); padding: 4px 0; border-bottom: 1px solid #e3e6e9; }
+.option input[type=checkbox], .option input[type=radio] { width: 28px; height: 28px; flex: none; accent-color: var(--primaer); }
+input.frei { margin-top: 8px; }
+
+.statuszeile { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+.status { font-weight: 700; font-size: .85rem; padding: 4px 8px; border-radius: 6px; margin-right: 4px; }
+.status-erfasst, .status-nicht_vorhanden, .status-nicht_zugaenglich { background: #dff0e2; color: var(--ok); }
+.status-offen, .status-aus_akten { background: var(--warn-grund); color: var(--warn-text); }
+.status-leer { background: var(--flaeche); color: #333; }
+.chip {
+  min-height: 40px; padding: 4px 10px; border: 1px solid var(--linie); border-radius: 20px;
+  background: var(--grund); color: var(--text); font: inherit; font-size: .8rem;
+}
+.chip.aktiv { background: var(--text); color: var(--grund); }
+
+.tabelle .zeile-karte { border: 2px solid #c5cad0; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+.zeile-nr { font-weight: 700; margin-bottom: 6px; }
+.vorschlagszeile { border-style: dashed; background: #fafafa; }
+
+/* Rückfrage, Meldung, Update */
+.dialog { border: 3px solid var(--primaer); border-radius: 14px; padding: 20px; max-width: 92vw; font-size: 1.05rem; }
+.dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.dialog-knoepfe { display: flex; gap: 10px; margin-top: 16px; }
+.dialog-knoepfe .knopf { flex: 1; }
+.toast {
+  position: fixed; left: 12px; right: 12px; bottom: 96px; z-index: 20;
+  padding: 14px; border-radius: 10px; background: #222; color: #fff; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.toast.sichtbar { opacity: 1; }
+.toast.fehler { background: var(--gefahr); }
+.update-leiste {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30; min-height: 56px;
+  background: #ffb000; color: #000; border: 0; font: inherit; font-weight: 700;
+}
+.versteckt { display: none; }
+.version { color: #555; font-size: .85rem; text-align: center; }
+
+/* Fotos und Skizzen (Etappe 3) */
+.knopfzeile { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.knopfzeile .knopf { flex: 1 1 45%; }
+.foto-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 6px 0; }
+.foto-raster .leer { grid-column: 1 / -1; margin: 0; }
+.foto-karte {
+  display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 6px;
+  border: 2px solid #c5cad0; border-radius: 10px; background: var(--grund); color: var(--text); text-decoration: none;
+}
+.foto-karte img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: var(--flaeche); cursor: pointer; }
+.foto-nr { font-weight: 700; font-size: .85rem; }
+.foto-karte img.skizzen-vorschau { object-fit: contain; aspect-ratio: auto; max-height: 220px; }
+.foto-karte figcaption { font-size: .85rem; }
+input.unterschrift { min-height: 44px; padding: 6px 8px; font-size: .9rem; }
+.foto-dialog { padding: 12px; width: 96vw; }
+.foto-dialog img { width: 100%; max-height: 65vh; object-fit: contain; background: #000; border-radius: 8px; }
+
+.skizzen-main { padding-top: 8px; }
+.zeichen-rahmen { padding-bottom: 6px; }
+.zeichenflaeche {
+  display: block; width: 100%; height: auto; touch-action: none;
+  border: 2px solid var(--linie); border-radius: 8px; background: #fff;
+}
+.werkzeug { margin: 8px 0 16px; }
+.wz-zeile { display: flex; gap: 6px; margin-bottom: 6px; }
+.wz {
+  flex: 1; min-height: 52px; padding: 4px 6px; border: 2px solid var(--primaer); border-radius: 10px;
+  background: var(--grund); color: var(--primaer); font: inherit; font-size: .9rem; font-weight: 600;
+}
+.wz.aktiv { background: var(--primaer); color: var(--primaer-text); }
+.wz:disabled { opacity: .4; }
+.wz.farbe { border-color: var(--f); color: var(--f); }
+.wz.farbe.aktiv { background: var(--f); color: #fff; }
+.markenliste h2 { font-size: 1.05rem; margin: 8px 0; }
+.marken-kreis {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+  border: 3px solid #c4001d; border-radius: 50%; color: #c4001d; font-weight: 700;
+}
+
+/* Maße, Sammeldiktat, Protokoll (Etappe 4) */
+.mass-info { margin-top: 6px; }
+.mass-ok { color: var(--ok); font-weight: 700; }
+.herkunft { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.sammeldiktat { border: 2px dashed var(--primaer); border-radius: 12px; padding: 8px 12px; margin-bottom: 16px; }
+.sammeldiktat textarea { margin: 8px 0 0; }
+select.ziel-auswahl {
+  width: 100%; min-height: 48px; margin: 6px 0; padding: 6px 8px;
+  border: 2px solid var(--linie); border-radius: 10px; font: inherit; background: var(--grund); color: var(--text);
+}
+.vorschlag-wert { margin: 4px 0 8px; font-size: 1.05rem; }
+.zeilen-vorschau { margin: 4px 0 8px; padding-left: 20px; }
+.protokoll-kopf { background: var(--flaeche); border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: .95rem; }
+.pruef-gruppe h3 { font-size: 1rem; margin: 18px 0 6px; padding: 6px 8px; background: var(--primaer); color: var(--primaer-text); border-radius: 6px; }
+.pruef-punkt { padding: 10px 0; border-bottom: 1px solid #d7dbe0; }
+.pruef-text { margin-bottom: 6px; }
+.option-knopf.aktiv.schaden { background: var(--gefahr); border-color: var(--gefahr); }
+.notizen textarea { margin-top: 6px; }
+
+/* Desktop-Test: App in Handybreite in der Mitte zeigen */
+@media (min-width: 700px) {
+  body { background: #d9dee5; }
+  #app { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; box-shadow: 0 0 24px rgba(0,0,0,.15); }
+  .fuss, .toast { max-width: 480px; margin: 0 auto; }
+}
+.desktop-band { background: #5a2d82; color: #fff; text-align: center; padding: .35rem; font: 600 .9rem system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<div class="desktop-band">Desktop-Testversion 0.4.1 – Daten bleiben in diesem Browser auf diesem Rechner</div>
+<button id="update" class="update-leiste" hidden>Neue Version verfügbar</button>
+<div id="app"><p style="padding:1rem">Beckenbuch wird geladen …</p></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript>Diese App benötigt JavaScript.</noscript>
+<script>window.BECKENBUCH_TESTGLIEDERUNG = {"format": 1, "vorlage": "TESTVORLAGE – keine echte Dienststellen-Vorlage", "version": "test-2026-11-24", "testdaten": true, "hinweise": "Dies ist eine Test-Gliederung mit erfundenen Feldern. Für echte Beckenbücher laden Sie unter Einstellungen das Vorlagenpaket Ihrer Dienststelle.", "teilbauwerke": [{"id": "testbecken", "label": "Testbecken"}, {"id": "testschacht", "label": "Testschacht"}, {"id": "testwand", "label": "Testwand"}], "freieTeilbauwerke": 2, "stammdaten": [{"id": "test_meisterei", "label": "Test-Meisterei"}, {"id": "test_telefon", "label": "Test-Telefon"}], "mindestumfang": [{"label": "Testangabe Pflicht", "felder": ["T1.pflichttext"]}, {"label": "Testtabelle mit Zeile", "felder": ["T2.tabelle"]}], "kapitel": [{"id": "T1", "nr": "T 1", "titel": "Testkapitel Allgemein", "teil": "A", "hinweis": "Testhinweis: Hier stehen Hinweise aus der Kursivschrift der Vorlage.", "felder": [{"id": "pflichttext", "label": "Test-Pflichttext", "art": "text", "pflicht": true, "ort": "vor_ort", "stichwoerter": ["pflicht"]}, {"id": "langtext", "label": "Test-Langtext", "art": "langtext", "ort": "vor_ort", "hinweis": "Testhinweis zum Feld"}, {"id": "laenge", "label": "Test-Länge", "art": "zahl", "einheit": "m", "ort": "vor_ort", "stichwoerter": ["länge"]}, {"id": "neigung", "label": "Test-Neigung", "art": "zahl", "format": "verhaeltnis", "einheit": "1:n", "ort": "vor_ort", "stichwoerter": ["neigung", "böschung"]}, {"id": "datum", "label": "Test-Datum", "art": "datum", "ort": "akten"}, {"id": "auswahl", "label": "Test-Auswahl", "art": "auswahl", "optionen": ["Option A", "Option B"], "ort": "vor_ort"}, {"id": "mehrfach", "label": "Test-Mehrfachauswahl", "art": "mehrfach", "optionen": ["Eins", "Zwei", "Drei"], "ort": "vor_ort"}, {"id": "janein", "label": "Test-Ja/Nein", "art": "janein", "ort": "vor_ort"}, {"id": "art", "label": "Test-Art (Vorschlag aus Teilbauwerken)", "art": "text", "vorschlagAus": "teilbauwerke", "ort": "vor_ort"}, {"id": "meisterei", "label": "Test-Meisterei", "art": "text", "ort": "stammdaten", "stammdaten": "test_meisterei"}, {"id": "wandfeld", "label": "Test-Feld nur bei Testwand", "art": "text", "ort": "vor_ort", "sichtbarWenn": {"teilbauwerk": ["testwand"]}}]}, {"id": "T2", "nr": "T 2", "titel": "Testkapitel Tabelle und Medien", "teil": "A", "felder": [{"id": "tabelle", "label": "Test-Tabelle", "art": "tabelle", "ort": "vor_ort", "fotosJeZeile": true, "spalten": [{"id": "nr", "label": "Nr.", "art": "zahl"}, {"id": "text", "label": "Bezeichnung", "art": "text"}], "vorschlagZeilen": [{"text": "Testvorschlag 1"}]}, {"id": "foto", "label": "Test-Foto", "art": "foto", "ort": "vor_ort"}, {"id": "skizze", "label": "Test-Skizze", "art": "skizze", "ort": "vor_ort", "marken": "T2.tabelle"}, {"id": "skizze_kopie", "label": "Test-Skizze (Kopie)", "art": "skizze", "aus": "T2.skizze"}]}, {"id": "T3", "nr": "T 3", "titel": "Testkapitel zuschaltbar", "teil": "B", "zuschaltbar": true, "felder": [{"id": "notiz", "label": "Test-Notiz", "art": "langtext", "ort": "akten", "vorschlag": true}]}, {"id": "T4", "nr": "T 4", "titel": "Testkapitel nur bei Testschacht", "teil": "B", "sichtbarWenn": {"teilbauwerk": ["testschacht"]}, "felder": [{"id": "tiefe", "label": "Test-Tiefe", "art": "zahl", "einheit": "m", "ort": "vor_ort"}]}, {"id": "T5", "nr": "T 5", "titel": "Testkapitel Protokoll", "teil": "C", "protokoll": {"arten": ["Testkontrolle", "Außerplanmäßige Testkontrolle, weil"], "witterung": ["Testwetter trocken", "Sonstige"], "anlagenarten": ["Testbecken (Testart)", "Sonstiges:"], "gruppen": [{"id": "A", "titel": "Testgruppe A", "punkte": [{"nr": "1", "text": "Testpunkt A 1"}, {"nr": "2", "text": "*Testpunkt A 2"}]}, {"id": "B", "titel": "Testgruppe B", "punkte": [{"nr": "1", "text": "Testpunkt B 1"}]}], "behebung": ["Test-AM", "Test-NL"], "fussnote": "*: Testfußnote"}, "felder": [{"id": "kontrolle", "label": "Test-Erstkontrolle", "art": "pruefprotokoll", "protokoll": "T5", "ort": "vor_ort"}]}]};</script>
+<script type="module">
+// ===== js/db.js =====
+const Modul_db = await (async () => {
+// Speicher auf dem Gerät (IndexedDB).
+// Grundsatz: Jede Änderung wird sofort geschrieben. Schreibvorgänge für denselben Datensatz
+// werden zusammengefasst, damit immer der neueste Stand gespeichert ist.
+
+const DB_NAME = 'beckenbuch';
+const DB_VERSION = 1;
+const STORES = ['einstellungen', 'vorlagen', 'buecher', 'fotos', 'skizzen'];
+
+let dbPromise = null;
+
+function oeffneDb() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      for (const name of STORES) {
+        if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error('Die Datenbank ist durch ein anderes Fenster blockiert.'));
+  });
+  return dbPromise;
+}
+
+function tx(db, store, modus) {
+  // „strict“: Der Browser meldet erst Erfolg, wenn die Daten dauerhaft geschrieben sind.
+  try {
+    return db.transaction(store, modus, { durability: 'strict' });
+  } catch {
+    return db.transaction(store, modus);
+  }
+}
+
+async function lese(store, id) {
+  const db = await oeffneDb();
+  return new Promise((resolve, reject) => {
+    const r = tx(db, store, 'readonly').objectStore(store).get(id);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+
+async function alle(store) {
+  const db = await oeffneDb();
+  return new Promise((resolve, reject) => {
+    const r = tx(db, store, 'readonly').objectStore(store).getAll();
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+
+async function schreibeJetzt(store, obj) {
+  const db = await oeffneDb();
+  return new Promise((resolve, reject) => {
+    const t = tx(db, store, 'readwrite');
+    t.objectStore(store).put(obj);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error || new Error('Speichern abgebrochen'));
+  });
+}
+
+async function loesche(store, id) {
+  const db = await oeffneDb();
+  return new Promise((resolve, reject) => {
+    const t = tx(db, store, 'readwrite');
+    t.objectStore(store).delete(id);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+  });
+}
+
+// ---------- Warteschlange je Datensatz ----------
+const laufend = new Map(); // key -> Promise
+const wartend = new Map(); // key -> neuester Stand
+let fehlerMelder = () => {};
+let zustandMelder = () => {};
+
+function beiSpeicherFehler(fn) { fehlerMelder = fn; }
+function beiSpeicherZustand(fn) { zustandMelder = fn; }
+
+function anzahlOffen() {
+  return laufend.size + wartend.size;
+}
+
+// Speichert obj. Kopie wird sofort angefertigt, damit spätere Änderungen am Objekt nicht stören.
+function speichere(store, obj) {
+  const key = `${store}:${obj.id}`;
+  const kopie = structuredClone(obj);
+  if (laufend.has(key)) {
+    wartend.set(key, { store, obj: kopie });
+    zustandMelder(anzahlOffen());
+    return laufend.get(key);
+  }
+  const p = (async () => {
+    let aktuell = { store, obj: kopie };
+    while (aktuell) {
+      try {
+        await schreibeJetzt(aktuell.store, aktuell.obj);
+      } catch (e) {
+        fehlerMelder(e);
+      }
+      aktuell = wartend.get(key);
+      wartend.delete(key);
+    }
+    laufend.delete(key);
+    zustandMelder(anzahlOffen());
+  })();
+  laufend.set(key, p);
+  zustandMelder(anzahlOffen());
+  return p;
+}
+
+async function allesGespeichert() {
+  while (laufend.size) await Promise.all([...laufend.values()]);
+}
+
+// ---------- Dauerhafter Speicher ----------
+async function speicherStatus() {
+  const s = { dauerhaft: null, belegtMB: null, verfuegbarMB: null };
+  if (navigator.storage) {
+    if (navigator.storage.persisted) s.dauerhaft = await navigator.storage.persisted();
+    if (navigator.storage.estimate) {
+      const e = await navigator.storage.estimate();
+      s.belegtMB = Math.round((e.usage || 0) / 1e5) / 10;
+      s.verfuegbarMB = Math.round((e.quota || 0) / 1e6);
+    }
+  }
+  return s;
+}
+
+async function dauerhaftBeantragen() {
+  if (navigator.storage && navigator.storage.persist) return navigator.storage.persist();
+  return false;
+}
+
+return { STORES, oeffneDb, lese, alle, loesche, beiSpeicherFehler, beiSpeicherZustand, anzahlOffen, speichere, allesGespeichert, speicherStatus, dauerhaftBeantragen };
+})();
+
+// ===== js/zahlen.js =====
+const Modul_zahlen = await (async () => {
+// Zahlen und Maße lesen – getippt oder mit der Tastatur diktiert.
+// Grundsatz: keine stille Korrektur, keine stille Umrechnung. Was nicht eindeutig ist,
+// wird als „nicht erkannt“ gemeldet und bleibt als Text stehen.
+
+// ---------- einfache Dezimalzahl ----------
+// Liefert eine Zahl oder null. Leerzeichen innerhalb der Zahl werden nicht entfernt
+// („2 40“ könnte 2,40 oder 240 heißen).
+function leseDezimal(text) {
+  if (text === undefined || text === null) return null;
+  const t = String(text).trim();
+  if (t === '') return null;
+  // Komma oder Punkt als Dezimaltrenner, aber nicht beides und höchstens einmal.
+  if (!/^[-+]?\d+([.,]\d+)?$/.test(t)) return null;
+  return Number(t.replace(',', '.'));
+}
+
+function zahlDE(n) {
+  if (n === null || n === undefined || Number.isNaN(n)) return '';
+  return String(n).replace('.', ',');
+}
+
+// ---------- Zahlwörter ----------
+const EINER = {
+  null: 0, ein: 1, eins: 1, eine: 1, einen: 1, zwei: 2, zwo: 2, drei: 3, vier: 4, fünf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9,
+};
+const ZEHN_BIS_NEUNZEHN = {
+  zehn: 10, elf: 11, zwölf: 12, dreizehn: 13, vierzehn: 14, fünfzehn: 15, sechzehn: 16, siebzehn: 17, achtzehn: 18, neunzehn: 19,
+};
+const ZEHNER = { zwanzig: 20, dreißig: 30, dreissig: 30, vierzig: 40, fünfzig: 50, sechzig: 60, siebzig: 70, achtzig: 80, neunzig: 90 };
+
+// „zweiunddreißig“, „hundertfünfzig“, „zweitausenddreihundert“, „eineinhalb“ → Zahl, sonst null.
+function zahlwort(wort) {
+  let w = String(wort || '').toLowerCase().trim();
+  if (!w) return null;
+  // „eineinhalb“, „zweieinhalb“ …
+  const halb = w.match(/^(.+?)einhalb$/);
+  if (halb) {
+    const g = zahlwort(halb[1] === 'ein' ? 'eins' : halb[1]);
+    return g === null ? null : g + 0.5;
+  }
+  if (w === 'halb' || w === 'einhalb') return 0.5;
+  const unter100 = (s) => {
+    if (s === '') return 0;
+    if (s in EINER) return EINER[s];
+    if (s in ZEHN_BIS_NEUNZEHN) return ZEHN_BIS_NEUNZEHN[s];
+    if (s in ZEHNER) return ZEHNER[s];
+    const m = s.match(/^(.+)und(.+)$/);
+    if (m && m[1] in EINER && m[2] in ZEHNER) return EINER[m[1]] + ZEHNER[m[2]];
+    return null;
+  };
+  const unter1000 = (s) => {
+    const i = s.indexOf('hundert');
+    if (i < 0) return unter100(s);
+    const vor = s.slice(0, i), nach = s.slice(i + 7);
+    const h = vor === '' ? 1 : unter100(vor);
+    const r = unter100(nach);
+    return h === null || r === null || h > 9 ? null : h * 100 + r;
+  };
+  const i = w.indexOf('tausend');
+  if (i < 0) return unter1000(w);
+  const t = w.slice(0, i) === '' ? 1 : unter1000(w.slice(0, i));
+  const r = unter1000(w.slice(i + 7));
+  return t === null || r === null ? null : t * 1000 + r;
+}
+
+// Ein Zahl-Teil: „2,40“, „2.4“, „zwei komma vier null“, „2 komma 40“, „zweiunddreißig“.
+function lesezahlteil(s) {
+  const t = s.trim();
+  if (t === '') return null;
+  const d = leseDezimal(t);
+  if (d !== null) return d;
+  const km = t.match(/^(\S+)\s+komma\s+(.+)$/);
+  if (km) {
+    const ganz = leseDezimal(km[1]) ?? zahlwort(km[1]);
+    if (ganz === null || !Number.isInteger(ganz)) return null;
+    // Nachkommastellen: Ziffern („40“) oder einzelne Zahlwörter („vier null“)
+    let nach = '';
+    if (/^\d+$/.test(km[2])) nach = km[2];
+    else {
+      for (const z of km[2].split(/\s+/)) {
+        const n = zahlwort(z);
+        if (n === null || n > 9 || !Number.isInteger(n)) return null;
+        nach += String(n);
+      }
+    }
+    return Number(`${ganz}.${nach}`);
+  }
+  if (/^[a-zäöüß]+$/.test(t)) return zahlwort(t);
+  return null;
+}
+
+// ---------- Einheiten ----------
+const EINHEITEN = [
+  ['m', ['m', 'meter', 'metern', 'mtr']],
+  ['cm', ['cm', 'zentimeter', 'zentimetern']],
+  ['mm', ['mm', 'millimeter', 'millimetern']],
+  ['km', ['km', 'kilometer', 'kilometern']],
+  ['ha', ['ha', 'hektar']],
+  ['m²', ['m²', 'm2', 'qm', 'quadratmeter', 'quadratmetern']],
+  ['m³', ['m³', 'm3', 'cbm', 'kubikmeter', 'kubikmetern']],
+  ['l/s', ['l/s', 'liter pro sekunde', 'liter je sekunde', 'l pro s', 'liter/sekunde']],
+  ['%', ['%', 'prozent']],
+  ['°', ['°', 'grad']],
+];
+const EINHEIT_INDEX = new Map();
+for (const [norm, namen] of EINHEITEN) for (const n of namen) EINHEIT_INDEX.set(n, norm);
+
+function normEinheit(e) {
+  if (!e) return '';
+  const k = String(e).toLowerCase().trim();
+  return EINHEIT_INDEX.get(k) || String(e).trim();
+}
+
+const FAKTOR = {
+  laenge: { mm: 0.001, cm: 0.01, m: 1, km: 1000 },
+  flaeche: { 'm²': 1, ha: 10000 },
+};
+
+// Umrechnung zwischen verträglichen Einheiten oder null.
+function umrechnen(zahl, von, nach) {
+  von = normEinheit(von); nach = normEinheit(nach);
+  if (von === nach) return zahl;
+  for (const f of Object.values(FAKTOR)) {
+    if (von in f && nach in f) return Math.round((zahl * f[von] / f[nach]) * 1e6) / 1e6;
+  }
+  return null;
+}
+
+// ---------- Maß lesen ----------
+// Ergebnis: { erkannt, art: 'zahl'|'dn'|'verhaeltnis', zahl, einheit, a, b, hinweis }
+// zahl bei Verhältnis 1:n ist n; einheit '' wenn keine diktiert wurde.
+function leseMass(text) {
+  const roh = String(text ?? '').trim();
+  const nicht = (hinweis) => ({ erkannt: false, art: null, zahl: null, einheit: '', hinweis });
+  if (!roh) return nicht('leer');
+  let t = roh.toLowerCase()
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/^(ca\.?|circa|etwa|ungefähr)\s+/, '')
+    .replace(/[.!]$/, '')
+    .trim();
+
+  // Nennweite: „DN 150“, „D N 150“, „de en 150“, „DN150“
+  const dn = t.match(/^(?:d\s?n|de\s?en)\s*(\S+)$/);
+  if (dn) {
+    const z = lesezahlteil(dn[1]);
+    if (z === null || !Number.isInteger(z)) return nicht('Nennweite nicht erkannt');
+    return { erkannt: true, art: 'dn', zahl: z, einheit: 'DN', hinweis: '' };
+  }
+
+  // Verhältnis: „1 zu 2“, „1:2“, „eins zu zwei“, „1 zu 1,5“
+  const vh = t.match(/^(\S+(?:\s+komma\s+\S+)?)\s*(?:zu|:)\s*(\S+(?:\s+komma\s+\S+)?)$/);
+  if (vh) {
+    const a = lesezahlteil(vh[1]), b = lesezahlteil(vh[2]);
+    if (a === null || b === null || a === 0) return nicht('Verhältnis nicht erkannt');
+    return { erkannt: true, art: 'verhaeltnis', a, b, zahl: Math.round((b / a) * 1e6) / 1e6, einheit: '1:n', hinweis: '' };
+  }
+
+  // „2 Meter 40“ → 2,40 m (gesprochene Zentimeter nach ganzen Metern)
+  const mz = t.match(/^(\S+) (?:meter|metern|m) (\S+)$/);
+  if (mz) {
+    const m = lesezahlteil(mz[1]), cm = lesezahlteil(mz[2]);
+    if (m !== null && Number.isInteger(m) && cm !== null && Number.isInteger(cm) && cm < 100) {
+      return { erkannt: true, art: 'zahl', zahl: m + cm / 100, einheit: 'm', hinweis: `als ${zahlDE(m + cm / 100)} m gelesen` };
+    }
+  }
+
+  // Zahl mit optionaler Einheit (längste passende Einheit am Ende)
+  let einheit = '';
+  let zahlTeil = t;
+  const namen = [...EINHEIT_INDEX.keys()].sort((x, y) => y.length - x.length);
+  for (const n of namen) {
+    if (t === n) break;
+    if (t.endsWith(n)) {
+      const vor = t.slice(0, t.length - n.length);
+      // Einheit muss abgetrennt sein oder direkt an einer Ziffer hängen („2,40m“)
+      if (vor.endsWith(' ') || /\d$/.test(vor) || /^[%°]/.test(n)) {
+        einheit = EINHEIT_INDEX.get(n);
+        zahlTeil = vor.trim();
+        break;
+      }
+    }
+  }
+  const z = lesezahlteil(zahlTeil);
+  if (z === null) return nicht(/\d\s+\d/.test(zahlTeil) ? 'mehrdeutig (Leerzeichen in der Zahl)' : 'keine Zahl erkannt');
+  return { erkannt: true, art: 'zahl', zahl: z, einheit, hinweis: '' };
+}
+
+// Vergleich der erkannten Einheit mit der Einheit des Feldes.
+// 'ohne' (nichts diktiert), 'gleich', 'umrechenbar', 'fremd'
+function einheitPasst(erkannt, feldEinheit) {
+  const e = normEinheit(erkannt), f = normEinheit(feldEinheit);
+  if (!e) return 'ohne';
+  if (!f) return 'fremd';
+  if (e === f) return 'gleich';
+  return umrechnen(1, e, f) === null ? 'fremd' : 'umrechenbar';
+}
+
+// Text für die Anzeige eines erkannten Maßes.
+function massText(m) {
+  if (!m || !m.erkannt) return '';
+  if (m.art === 'dn') return `DN ${m.zahl}`;
+  if (m.art === 'verhaeltnis') return `${zahlDE(m.a)} : ${zahlDE(m.b)}`;
+  return `${zahlDE(m.zahl)}${m.einheit ? ` ${m.einheit}` : ''}`;
+}
+
+return { leseDezimal, zahlDE, zahlwort, normEinheit, umrechnen, leseMass, einheitPasst, massText };
+})();
+
+// ===== js/masse.js =====
+const Modul_masse = await (async () => {
+// Maße in Zahlfeldern: Wortlaut bleibt gespeichert, der erkannte Wert wird zur Bestätigung angezeigt.
+// Reine Logik, ohne Bildschirm – automatisch testbar.
+//
+// Eintrag eines Zahlfeldes im Beckenbuch:
+// { wert: '<Wortlaut>', mass: { art, zahl, einheit, a, b, umgerechnetAus } | null, herkunft: 'gemessen'|'geschaetzt'|'abgelesen'|null }
+// `mass` ist nur gesetzt, wenn der Wert eindeutig war oder bestätigt wurde.
+const { leseMass, einheitPasst, umrechnen, normEinheit, massText, zahlDE } = Modul_zahlen;
+const HERKUNFT = { gemessen: 'gemessen', geschaetzt: 'geschätzt', abgelesen: 'vom Schild/Plan abgelesen' };
+
+// Welche Art von Wert das Feld erwartet.
+function erwarteteArt(feld) {
+  if (feld.format === 'verhaeltnis' || normEinheit(feld.einheit) === '1:n') return 'verhaeltnis';
+  if (feld.format === 'dn' || feld.einheit === 'DN') return 'dn';
+  return 'zahl';
+}
+
+// Bewertet eine Eingabe für ein Feld.
+// zustand: 'leer' | 'auto' (eindeutig, ohne Rückfrage übernommen) | 'bestaetigen' (erkannt, bitte bestätigen)
+//        | 'umrechnen' (Einheit passt, aber andere Größe – Umrechnung nur auf Tipp) | 'fremd' (Einheit/Art passt nicht)
+//        | 'unerkannt' (bleibt Text, zur Prüfung)
+function bewerteMassEingabe(text, feld) {
+  const t = String(text ?? '').trim();
+  if (!t) return { zustand: 'leer', mass: null };
+  const m = leseMass(t);
+  if (!m.erkannt) return { zustand: 'unerkannt', mass: null, hinweis: m.hinweis };
+  const soll = erwarteteArt(feld);
+  if (m.art !== soll) {
+    return { zustand: 'fremd', mass: m, hinweis: `${massText(m)} passt nicht zu diesem Feld (erwartet: ${soll === 'verhaeltnis' ? 'Verhältnis 1 : n' : soll === 'dn' ? 'Nennweite DN' : 'Zahl'}).` };
+  }
+  if (m.art === 'zahl') {
+    const passt = einheitPasst(m.einheit, feld.einheit);
+    if (passt === 'fremd') return { zustand: 'fremd', mass: m, hinweis: `Einheit ${m.einheit} passt nicht zum Feld${feld.einheit ? ` (${feld.einheit})` : ''}.` };
+    if (passt === 'umrechenbar') {
+      const z = umrechnen(m.zahl, m.einheit, feld.einheit);
+      return {
+        zustand: 'umrechnen', mass: m,
+        umgerechnet: { art: 'zahl', zahl: z, einheit: normEinheit(feld.einheit), umgerechnetAus: massText(m) },
+        hinweis: `Diktiert in ${m.einheit}, das Feld ist in ${feld.einheit}.`,
+      };
+    }
+  }
+  // Eindeutig nur bei Ziffern (+ Einheit) ohne Deutung; Zahlwörter oder „2 Meter 40“ werden zur Bestätigung angezeigt.
+  const nurZiffern = /^[-+]?\d+([.,]\d+)?\s*[a-zA-Zäöü²³/%°]*\.?$/.test(t) || /^\d+\s*(zu|:)\s*\d+([.,]\d+)?$/i.test(t) || /^DN\s?\d+$/i.test(t);
+  const mass = { art: m.art, zahl: m.zahl, einheit: m.art === 'zahl' ? (m.einheit || normEinheit(feld.einheit)) : m.einheit, ...(m.art === 'verhaeltnis' ? { a: m.a, b: m.b } : {}) };
+  return { zustand: nurZiffern && !m.hinweis ? 'auto' : 'bestaetigen', mass, hinweis: m.hinweis };
+}
+
+// Zustand eines gespeicherten Eintrags: 'leer' | 'ok' | 'pruefen'
+function massZustand(feld, eintrag) {
+  const t = String((eintrag && eintrag.wert) ?? '').trim();
+  if (!t) return 'leer';
+  return eintrag.mass ? 'ok' : 'pruefen';
+}
+
+// Anzeige des übernommenen Wertes, z. B. „2,4 m (gemessen)“.
+function massAnzeige(eintrag) {
+  if (!eintrag || !eintrag.mass) return '';
+  const m = eintrag.mass;
+  let s = m.art === 'verhaeltnis' ? `${zahlDE(m.a)} : ${zahlDE(m.b)}` : m.art === 'dn' ? `DN ${m.zahl}` : `${zahlDE(m.zahl)}${m.einheit ? ` ${m.einheit}` : ''}`;
+  if (m.umgerechnetAus) s += ` (umgerechnet aus ${m.umgerechnetAus})`;
+  if (eintrag.herkunft) s += ` – ${HERKUNFT[eintrag.herkunft]}`;
+  return s;
+}
+
+return { HERKUNFT, erwarteteArt, bewerteMassEingabe, massZustand, massAnzeige };
+})();
+
+// ===== js/gliederung.js =====
+const Modul_gliederung = await (async () => {
+// Logik rund um die Gliederung (Vorlage) und den Bearbeitungsstand eines Beckenbuchs.
+// Reine Funktionen ohne Bildschirm und ohne Speicher – deshalb automatisch testbar.
+const { massZustand } = Modul_masse;
+const STATUS = {
+  erfasst: 'erfasst',
+  nicht_vorhanden: 'nicht vorhanden',
+  nicht_zugaenglich: 'nicht zugänglich',
+  offen: 'offen',
+  aus_akten: 'aus Akten',
+  leer: 'noch leer',
+};
+
+// Status, die von Hand gesetzt werden können (erfasst ergibt sich aus dem Wert).
+const HAND_STATUS = ['nicht_vorhanden', 'nicht_zugaenglich', 'offen', 'aus_akten'];
+
+// Diese Status gelten als „geklärt“ für den Fortschritt.
+const GEKLAERT = new Set(['erfasst', 'nicht_vorhanden', 'nicht_zugaenglich']);
+
+const FELDARTEN = ['text', 'langtext', 'zahl', 'datum', 'auswahl', 'mehrfach', 'janein', 'foto', 'skizze', 'tabelle', 'pruefprotokoll'];
+
+const BUCH_STAND = {
+  in_arbeit: 'in Arbeit',
+  vor_ort_fertig: 'vor Ort fertig',
+  vollstaendig: 'vollständig',
+  versendet: 'versendet',
+};
+
+function feldKey(kapitelId, feldId) {
+  return `${kapitelId}.${feldId}`;
+}
+
+// ---------- Prüfung einer Gliederungsdatei ----------
+function pruefeGliederung(g) {
+  const fehler = [];
+  if (!g || typeof g !== 'object') return ['Die Datei enthält keine Gliederung.'];
+  if (g.format !== 1) fehler.push('Unbekanntes Format (erwartet: "format": 1).');
+  if (!g.vorlage) fehler.push('Name der Vorlage ("vorlage") fehlt.');
+  if (!g.version) fehler.push('Version ("version") fehlt.');
+  if (!Array.isArray(g.kapitel) || g.kapitel.length === 0) fehler.push('Keine Kapitel vorhanden.');
+  const tbIds = new Set((g.teilbauwerke || []).map((t) => t.id));
+  const stIds = new Set((g.stammdaten || []).map((s) => s.id));
+  const kapIds = new Set();
+  const alleKeys = new Set();
+  for (const k of g.kapitel || []) {
+    if (!k.id) { fehler.push('Ein Kapitel hat keine "id".'); continue; }
+    if (kapIds.has(k.id)) fehler.push(`Kapitel-ID doppelt: ${k.id}`);
+    kapIds.add(k.id);
+    pruefeSichtbar(k.sichtbarWenn, tbIds, `Kapitel ${k.id}`, fehler);
+    const feldIds = new Set();
+    for (const f of k.felder || []) {
+      const wo = `Feld ${k.id}.${f.id}`;
+      if (!f.id) { fehler.push(`Kapitel ${k.id}: Feld ohne "id".`); continue; }
+      if (feldIds.has(f.id)) fehler.push(`${wo} ist doppelt.`);
+      feldIds.add(f.id);
+      alleKeys.add(feldKey(k.id, f.id));
+      if (!f.label) fehler.push(`${wo}: "label" fehlt.`);
+      if (!FELDARTEN.includes(f.art)) fehler.push(`${wo}: unbekannte Feldart "${f.art}".`);
+      if ((f.art === 'auswahl' || f.art === 'mehrfach') && !(Array.isArray(f.optionen) && f.optionen.length)) {
+        fehler.push(`${wo}: Auswahlfeld ohne "optionen".`);
+      }
+      if (f.art === 'tabelle' && !(Array.isArray(f.spalten) && f.spalten.length)) fehler.push(`${wo}: Tabelle ohne "spalten".`);
+      if (f.stammdaten && !stIds.has(f.stammdaten)) fehler.push(`${wo}: Stammdatum "${f.stammdaten}" ist nicht definiert.`);
+      pruefeSichtbar(f.sichtbarWenn, tbIds, wo, fehler);
+    }
+  }
+  const index = new Map();
+  for (const k of g.kapitel || []) for (const f of k.felder || []) if (k.id && f.id) index.set(feldKey(k.id, f.id), f);
+  for (const k of g.kapitel || []) {
+    for (const f of k.felder || []) {
+      const wo = `Feld ${k.id}.${f.id}`;
+      if (f.aus && !alleKeys.has(f.aus)) fehler.push(`${wo}: Verweis "aus": "${f.aus}" zeigt auf kein Feld.`);
+      if (f.aus && index.has(f.aus) && ['foto', 'skizze'].includes(f.art) && index.get(f.aus).art !== f.art) {
+        fehler.push(`${wo}: "aus" muss auf ein Feld derselben Art (${f.art}) zeigen.`);
+      }
+      // Marken einer Skizze sind mit einer Tabelle verknüpft (Spalte "nr"), z. B. Eingriffsstellen.
+      if (f.marken) {
+        const t = index.get(f.marken);
+        if (f.art !== 'skizze') fehler.push(`${wo}: "marken" gibt es nur bei Skizzen.`);
+        if (!t) fehler.push(`${wo}: "marken": "${f.marken}" zeigt auf kein Feld.`);
+        else if (t.art !== 'tabelle' || !(t.spalten || []).some((s) => s.id === 'nr')) fehler.push(`${wo}: "marken" muss auf eine Tabelle mit Spalte "nr" zeigen.`);
+      }
+      if (f.fotosJeZeile && f.art !== 'tabelle') fehler.push(`${wo}: "fotosJeZeile" gibt es nur bei Tabellen.`);
+      if (f.art === 'pruefprotokoll') {
+        const pk = (g.kapitel || []).find((x) => x.id === f.protokoll);
+        if (!pk || !pk.protokoll || !Array.isArray(pk.protokoll.gruppen)) fehler.push(`${wo}: "protokoll" muss auf ein Kapitel mit Protokoll (gruppen) zeigen.`);
+      }
+      if (f.format && !['verhaeltnis', 'dn'].includes(f.format)) fehler.push(`${wo}: unbekanntes "format" "${f.format}".`);
+    }
+  }
+  for (const m of g.mindestumfang || []) {
+    for (const key of m.felder || []) {
+      if (!alleKeys.has(key)) fehler.push(`Mindestumfang "${m.label}": Feld ${key} gibt es nicht.`);
+    }
+  }
+  return fehler;
+}
+
+function pruefeSichtbar(s, tbIds, wo, fehler) {
+  if (!s) return;
+  for (const id of s.teilbauwerk || []) {
+    if (!tbIds.has(id)) fehler.push(`${wo}: Teilbauwerk "${id}" in "sichtbarWenn" ist nicht definiert.`);
+  }
+}
+
+// ---------- Sichtbarkeit ----------
+function istSichtbar(element, buch) {
+  const s = element.sichtbarWenn;
+  if (!s || !s.teilbauwerk || s.teilbauwerk.length === 0) return true;
+  const gewaehlt = new Set(buch.teilbauwerke || []);
+  return s.teilbauwerk.some((id) => gewaehlt.has(id));
+}
+
+function sichtbareKapitel(g, buch) {
+  const zu = new Set(buch.zugeschaltet || []);
+  return g.kapitel.filter((k) => (!k.zuschaltbar || zu.has(k.id)) && istSichtbar(k, buch));
+}
+
+function sichtbareFelder(kapitel, buch) {
+  return (kapitel.felder || []).filter((f) => istSichtbar(f, buch));
+}
+
+// ---------- Werte und Status ----------
+function istLeer(feld, wert) {
+  if (wert === undefined || wert === null) return true;
+  switch (feld.art) {
+    case 'janein':
+      return wert !== true && wert !== false;
+    case 'mehrfach':
+    case 'foto':
+    case 'skizze':
+      return !Array.isArray(wert) || wert.length === 0;
+    case 'tabelle':
+      return !Array.isArray(wert) || !wert.some((z) => zeileHatInhalt(feld, z));
+    case 'pruefprotokoll':
+      return typeof wert !== 'object' || (!wert.datum && Object.keys(wert.punkte || {}).length === 0);
+    default:
+      return String(wert).trim() === '';
+  }
+}
+
+// Vorschlagszeilen aus der Vorlage (Beispiele) zählen erst, wenn sie bestätigt oder bearbeitet wurden.
+function zeileHatInhalt(feld, zeile) {
+  if (zeile && zeile._vorschlag) return false;
+  if (zeile && Array.isArray(zeile.fotos) && zeile.fotos.length) return true;
+  return (feld.spalten || []).some((s) => zeile && zeile[s.id] !== undefined && String(zeile[s.id]).trim() !== '');
+}
+
+// Wert eines Feldes – bei "aus"-Feldern der Wert des Bezugsfeldes.
+function wertVon(g, buch, kapitelId, feld) {
+  if (feld.aus) {
+    const e = (buch.werte || {})[feld.aus];
+    return e ? e.wert : undefined;
+  }
+  const e = (buch.werte || {})[feldKey(kapitelId, feld.id)];
+  return e ? e.wert : undefined;
+}
+
+function feldStatus(g, buch, kapitelId, feld) {
+  const e = (buch.werte || {})[feldKey(kapitelId, feld.id)];
+  if (!feld.aus && e && e.status && HAND_STATUS.includes(e.status)) return e.status;
+  return istLeer(feld, wertVon(g, buch, kapitelId, feld)) ? 'leer' : 'erfasst';
+}
+
+function kapitelFortschritt(g, buch, kapitel) {
+  const felder = sichtbareFelder(kapitel, buch).filter((f) => !f.aus);
+  const r = { gesamt: felder.length, geklaert: 0, offen: 0, aus_akten: 0, leer: 0, pflichtLeer: 0, pruefen: 0 };
+  for (const f of felder) {
+    const st = feldStatus(g, buch, kapitel.id, f);
+    if (f.art === 'zahl' && massZustand(f, (buch.werte || {})[feldKey(kapitel.id, f.id)]) === 'pruefen') r.pruefen++;
+    if (GEKLAERT.has(st)) r.geklaert++;
+    else if (st === 'offen') r.offen++;
+    else if (st === 'aus_akten') r.aus_akten++;
+    else r.leer++;
+    if (f.pflicht && st === 'leer') r.pflichtLeer++;
+  }
+  return r;
+}
+
+function mindestumfang(g, buch) {
+  const index = feldIndex(g);
+  return (g.mindestumfang || []).map((m) => {
+    const fehlend = (m.felder || []).filter((key) => {
+      const t = index.get(key);
+      if (!t) return true;
+      return feldStatus(g, buch, t.kapitel.id, t.feld) !== 'erfasst';
+    });
+    return { label: m.label, erfuellt: fehlend.length === 0, fehlend };
+  });
+}
+
+function feldIndex(g) {
+  const m = new Map();
+  for (const k of g.kapitel) for (const f of k.felder || []) m.set(feldKey(k.id, f.id), { kapitel: k, feld: f });
+  return m;
+}
+
+// Alle Felder, die als „aus Akten“ markiert sind oder deren Ort „akten“ ist und die noch leer sind.
+function akteneintraege(g, buch) {
+  const liste = [];
+  for (const k of sichtbareKapitel(g, buch)) {
+    for (const f of sichtbareFelder(k, buch)) {
+      if (f.aus) continue;
+      const st = feldStatus(g, buch, k.id, f);
+      if (st === 'aus_akten' || (f.ort === 'akten' && st === 'leer')) liste.push({ kapitel: k, feld: f, status: st });
+    }
+  }
+  return liste;
+}
+
+// ---------- Vorschläge ----------
+function vorschlagAusTeilbauwerken(g, buch, feld) {
+  if (feld.vorschlagAus !== 'teilbauwerke') return '';
+  const erlaubt = feld.vorschlagTeilbauwerke ? new Set(feld.vorschlagTeilbauwerke) : null;
+  const gewaehlt = new Set(buch.teilbauwerke || []);
+  const namen = (g.teilbauwerke || [])
+    .filter((t) => gewaehlt.has(t.id) && (!erlaubt || erlaubt.has(t.id)))
+    .map((t) => t.label);
+  return namen.join(', ');
+}
+
+// ---------- Neues Beckenbuch ----------
+function neueId() {
+  const zufall = Math.random().toString(36).slice(2, 8);
+  return `bb-${Date.now().toString(36)}-${zufall}`;
+}
+
+function neueZeilenId() {
+  return `z-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function neuesBeckenbuch(g, stammdaten, angaben, jetzt = new Date().toISOString()) {
+  const buch = {
+    id: neueId(),
+    vorlage: { name: g.vorlage, version: g.version, testdaten: !!g.testdaten },
+    stand: 'in_arbeit',
+    teilbauwerke: [...(angaben.teilbauwerke || [])],
+    freieTeilbauwerke: (angaben.freieTeilbauwerke || []).filter((t) => t && t.trim()),
+    zugeschaltet: [],
+    werte: {},
+    notizen: {},
+    angelegt: jetzt,
+    geaendert: jetzt,
+    gesichert: null,
+    versendet: null,
+  };
+  const setze = (key, wert) => { buch.werte[key] = { wert, status: null, geaendert: jetzt }; };
+  const deck = g.kapitel.find((k) => k.id === 'DECK');
+  const hatFeld = (id) => !!deck && (deck.felder || []).some((f) => f.id === id);
+  if (angaben.name && hatFeld('name')) setze('DECK.name', angaben.name);
+  if (angaben.bauwerksnr && hatFeld('bauwerksnr')) setze('DECK.bauwerksnr', angaben.bauwerksnr);
+  // Rückfall: Hat die Gliederung (z. B. die Test-Gliederung) kein Deckblattfeld dafür,
+  // merkt sich das Beckenbuch Name und Bauwerksnummer selbst, damit nichts verloren geht.
+  buch.kopf = {
+    name: !hatFeld('name') && angaben.name ? angaben.name.trim() : '',
+    bauwerksnr: !hatFeld('bauwerksnr') && angaben.bauwerksnr ? angaben.bauwerksnr.trim() : '',
+  };
+  // Stammdaten übernehmen (Kopie – später im Beckenbuch änderbar)
+  for (const k of g.kapitel) {
+    for (const f of k.felder || []) {
+      if (!f.stammdaten) continue;
+      const w = stammdaten ? stammdaten[f.stammdaten] : undefined;
+      if (w === undefined || w === null || w === '') continue;
+      if (f.art === 'tabelle') {
+        if (Array.isArray(w) && w.length) setze(feldKey(k.id, f.id), w.map((z) => ({ ...z, id: neueZeilenId() })));
+      } else setze(feldKey(k.id, f.id), w);
+    }
+  }
+  // Vorschlagszeilen für Tabellen anlegen
+  for (const k of g.kapitel) {
+    for (const f of k.felder || []) {
+      const key = feldKey(k.id, f.id);
+      if (f.art === 'tabelle' && Array.isArray(f.vorschlagZeilen) && !buch.werte[key]) {
+        setze(key, f.vorschlagZeilen.map((z) => ({ ...z, id: neueZeilenId(), _vorschlag: true })));
+      }
+    }
+  }
+  return buch;
+}
+
+function buchName(buch) {
+  const e = buch.werte && buch.werte['DECK.name'];
+  return (e && e.wert) || (buch.kopf && buch.kopf.name) || 'Ohne Namen';
+}
+
+function buchBauwerksnr(buch) {
+  const e = buch.werte && buch.werte['DECK.bauwerksnr'];
+  return (e && e.wert) || (buch.kopf && buch.kopf.bauwerksnr) || '';
+}
+
+// Hinweis „nicht gesichert“: geändert nach letzter Sicherung bzw. letztem Versand.
+function brauchtSicherung(buch) {
+  const letzte = [buch.gesichert, buch.versendet].filter(Boolean).sort().pop();
+  return !letzte || letzte < buch.geaendert;
+}
+
+return { STATUS, HAND_STATUS, FELDARTEN, BUCH_STAND, feldKey, pruefeGliederung, istSichtbar, sichtbareKapitel, sichtbareFelder, istLeer, zeileHatInhalt, wertVon, feldStatus, kapitelFortschritt, mindestumfang, feldIndex, akteneintraege, vorschlagAusTeilbauwerken, neueId, neueZeilenId, neuesBeckenbuch, buchName, buchBauwerksnr, brauchtSicherung };
+})();
+
+// ===== js/ui.js =====
+const Modul_ui = await (async () => {
+// Kleine Hilfsfunktionen für die Oberfläche.
+
+// h('button', { class: 'gross', onclick: fn }, 'Text') erzeugt ein Element.
+function h(tag, attrs = {}, ...kinder) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === undefined || v === null || v === false) continue;
+    if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else if (k === 'dataset') Object.assign(el.dataset, v);
+    else if (k in el && typeof v !== 'string') el[k] = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kind of kinder.flat(Infinity)) {
+    if (kind === undefined || kind === null || kind === false) continue;
+    el.append(kind instanceof Node ? kind : document.createTextNode(String(kind)));
+  }
+  return el;
+}
+
+function leere(el) {
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+let toastTimer = null;
+function meldung(text, art = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.className = `toast sichtbar ${art}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, art === 'fehler' ? 6000 : 2500);
+}
+
+// Rückfrage mit großen Schaltflächen. Gibt true/false zurück.
+function bestaetigen(text, jaText = 'Ja', neinText = 'Abbrechen', gefaehrlich = false) {
+  return new Promise((resolve) => {
+    const dlg = h('dialog', { class: 'dialog' },
+      h('p', {}, text),
+      h('div', { class: 'dialog-knoepfe' },
+        h('button', { class: 'knopf', onclick: () => { dlg.close(); resolve(false); } }, neinText),
+        h('button', { class: gefaehrlich ? 'knopf gefahr' : 'knopf primaer', onclick: () => { dlg.close(); resolve(true); } }, jaText),
+      ),
+    );
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg);
+    dlg.showModal();
+  });
+}
+
+function datumDE(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Textfeld wächst mit dem Inhalt mit.
+function mitwachsen(textarea) {
+  const anpassen = () => { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight + 2}px`; };
+  textarea.addEventListener('input', anpassen);
+  requestAnimationFrame(anpassen);
+  return textarea;
+}
+
+// Feld, zu dem nach dem Wechsel zurück ins Kapitel gescrollt wird (z. B. nach dem Zeichnen).
+const sprungziel = { key: null };
+
+return { h, leere, meldung, bestaetigen, datumDE, mitwachsen, sprungziel };
+})();
+
+// ===== js/version.js =====
+const Modul_version = await (async () => {
+// Bei jeder Veröffentlichung erhöhen – auch in sw.js (Test prüft, dass beide gleich sind).
+const VERSION = '0.4.1';
+
+return { VERSION };
+})();
+
+// ===== js/bilder.js =====
+const Modul_bilder = await (async () => {
+// Bilder verkleinern und laden. Fotos werden beim Aufnehmen auf eine handliche Größe gebracht,
+// damit der Speicher des Handys nicht vollläuft. Für die Ausgabe (Etappe 6) wird nochmals verkleinert.
+
+const FOTO_MAX_KANTE = 2000;   // Pixel der längeren Seite im Speicher
+const FOTO_QUALITAET = 0.85;
+const VORSCHAU_MAX_KANTE = 360;
+
+// Zielgröße bei gleichem Seitenverhältnis; kleinere Bilder werden nicht vergrößert.
+function zielgroesse(breite, hoehe, maxKante) {
+  const lang = Math.max(breite, hoehe);
+  if (lang <= maxKante) return { breite, hoehe };
+  const f = maxKante / lang;
+  return { breite: Math.max(1, Math.round(breite * f)), hoehe: Math.max(1, Math.round(hoehe * f)) };
+}
+
+// Datei (Kamera/Galerie) → Bild mit richtiger Drehung (Chrome beachtet die EXIF-Ausrichtung).
+async function ladeBild(blob) {
+  if ('createImageBitmap' in window) {
+    try { return await createImageBitmap(blob, { imageOrientation: 'from-image' }); } catch { /* Fallback unten */ }
+  }
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    return img;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function canvasZuBlob(canvas, typ = 'image/jpeg', qualitaet = FOTO_QUALITAET) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Bild konnte nicht erzeugt werden.'))), typ, qualitaet);
+  });
+}
+
+// Liefert { blob, vorschau, breite, hoehe }.
+async function verkleinere(datei, maxKante = FOTO_MAX_KANTE) {
+  const bild = await ladeBild(datei);
+  const bw = bild.width, bh = bild.height;
+  const z = zielgroesse(bw, bh, maxKante);
+  const c = document.createElement('canvas');
+  c.width = z.breite; c.height = z.hoehe;
+  c.getContext('2d').drawImage(bild, 0, 0, z.breite, z.hoehe);
+  const blob = await canvasZuBlob(c);
+  const v = zielgroesse(z.breite, z.hoehe, VORSCHAU_MAX_KANTE);
+  const cv = document.createElement('canvas');
+  cv.width = v.breite; cv.height = v.hoehe;
+  cv.getContext('2d').drawImage(c, 0, 0, v.breite, v.hoehe);
+  const vorschau = await canvasZuBlob(cv, 'image/jpeg', 0.8);
+  if (bild.close) bild.close();
+  return { blob, vorschau, breite: z.breite, hoehe: z.hoehe };
+}
+
+// Objekt-URLs für Vorschaubilder; werden beim Bildschirmwechsel freigegeben.
+const urls = new Set();
+function bildUrl(blob) {
+  const u = URL.createObjectURL(blob);
+  urls.add(u);
+  return u;
+}
+function urlsFreigeben() {
+  for (const u of urls) URL.revokeObjectURL(u);
+  urls.clear();
+}
+
+function groesseText(bytes) {
+  if (bytes < 1e6) return `${Math.round(bytes / 1e3)} kB`;
+  return `${(bytes / 1e6).toFixed(1).replace('.', ',')} MB`;
+}
+
+return { FOTO_MAX_KANTE, FOTO_QUALITAET, VORSCHAU_MAX_KANTE, zielgroesse, ladeBild, canvasZuBlob, verkleinere, bildUrl, urlsFreigeben, groesseText };
+})();
+
+// ===== js/fotos.js =====
+const Modul_fotos = await (async () => {
+// Fotos: aufnehmen oder aus der Galerie wählen, Bildunterschrift, fortlaufende Nummer, Zeit, Standort (auf Wunsch).
+// Ein Foto ist ein Datensatz im Speicher „fotos“:
+// { id, buchId, feldKey, nr, blob, vorschau, breite, hoehe, unterschrift, aufgenommen, quelle, standort }
+// Das Feld im Beckenbuch enthält nur die Liste der Foto-IDs.
+const db = Modul_db;
+const { h, leere, meldung, bestaetigen, datumDE } = Modul_ui;
+const { verkleinere, bildUrl, groesseText } = Modul_bilder;
+function neueFotoId() {
+  return `f-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+// Standort einmalig abfragen. Liefert { lat, lon, genauigkeit, zeit } oder null.
+function standortAbfragen(zeitlimitMs = 15000) {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({
+        lat: Math.round(p.coords.latitude * 1e6) / 1e6,
+        lon: Math.round(p.coords.longitude * 1e6) / 1e6,
+        genauigkeit: Math.round(p.coords.accuracy),
+        zeit: new Date(p.timestamp).toISOString(),
+      }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: zeitlimitMs, maximumAge: 30000 },
+    );
+  });
+}
+
+function standortText(s) {
+  if (!s) return 'ohne Standort';
+  return `${String(s.lat).replace('.', ',')} / ${String(s.lon).replace('.', ',')} (± ${s.genauigkeit} m)`;
+}
+
+// Nimmt Dateien entgegen, verkleinert, speichert. Liefert die neuen Foto-Datensätze.
+// kontext: { buch, aendern(buch), standortAn }
+async function fotosAufnehmen(dateien, kontext, feldKey, quelle) {
+  const neu = [];
+  for (const datei of dateien) {
+    if (!datei.type.startsWith('image/')) { meldung(`${datei.name}: kein Bild`, 'fehler'); continue; }
+    const v = await verkleinere(datei);
+    kontext.buch.fotoZaehler = (kontext.buch.fotoZaehler || 0) + 1;
+    const foto = {
+      id: neueFotoId(),
+      buchId: kontext.buch.id,
+      feldKey,
+      nr: kontext.buch.fotoZaehler,
+      blob: v.blob,
+      vorschau: v.vorschau,
+      breite: v.breite,
+      hoehe: v.hoehe,
+      unterschrift: '',
+      // Kamera: jetzt. Galerie: Änderungsdatum der Datei (meist Aufnahmezeit).
+      aufgenommen: new Date(quelle === 'galerie' && datei.lastModified ? datei.lastModified : Date.now()).toISOString(),
+      quelle,
+      standort: null,
+    };
+    // Erst das Foto dauerhaft speichern, dann im Beckenbuch eintragen.
+    await db.speichere('fotos', foto);
+    neu.push(foto);
+  }
+  if (neu.length && kontext.standortAn) {
+    // Standort im Hintergrund ergänzen – das Foto ist schon gespeichert.
+    standortAbfragen().then((s) => {
+      for (const f of neu) { f.standort = s; db.speichere('fotos', f); }
+      if (!s) meldung('Standort konnte nicht ermittelt werden.');
+    });
+  }
+  return neu;
+}
+
+async function ladeFotos(ids) {
+  const r = [];
+  for (const id of ids || []) {
+    const f = await db.lese('fotos', id);
+    if (f) r.push(f);
+  }
+  return r;
+}
+
+// Bedienelement für ein Fotofeld (oder die Fotos einer Tabellenzeile).
+// ids: aktuelle Liste, setzeIds(neueListe): speichert im Beckenbuch.
+function fotoFeld({ kontext, feldKey, ids, setzeIds, nurAnzeigen = false }) {
+  const box = h('div', { class: 'fotofeld' });
+  const raster = h('div', { class: 'foto-raster' });
+  let liste = [...(ids || [])];
+
+  const zeichne = async () => {
+    const fotos = await ladeFotos(liste);
+    leere(raster);
+    if (!fotos.length) raster.append(h('p', { class: 'leer' }, nurAnzeigen ? '(noch kein Foto)' : 'Noch kein Foto.'));
+    for (const f of fotos) raster.append(fotoKarte(f, nurAnzeigen, async () => {
+      liste = liste.filter((x) => x !== f.id);
+      setzeIds(liste);
+      await db.loesche('fotos', f.id);
+      zeichne();
+    }));
+  };
+
+  box.append(raster);
+  if (!nurAnzeigen) {
+    const verarbeite = async (ev, quelle) => {
+      const dateien = [...ev.target.files];
+      ev.target.value = '';
+      if (!dateien.length) return;
+      meldung(dateien.length > 1 ? `${dateien.length} Fotos werden gespeichert …` : 'Foto wird gespeichert …');
+      try {
+        const neu = await fotosAufnehmen(dateien, kontext, feldKey, quelle);
+        liste = [...liste, ...neu.map((f) => f.id)];
+        setzeIds(liste);
+        await zeichne();
+        if (neu.length) meldung(neu.length > 1 ? `${neu.length} Fotos gespeichert.` : `Foto ${neu[0].nr} gespeichert.`);
+      } catch (e) {
+        meldung(`Foto konnte nicht gespeichert werden: ${e.message}`, 'fehler');
+      }
+    };
+    const kamera = h('input', { type: 'file', accept: 'image/*', capture: 'environment', class: 'versteckt', onchange: (ev) => verarbeite(ev, 'kamera') });
+    const galerie = h('input', { type: 'file', accept: 'image/*', multiple: true, class: 'versteckt', onchange: (ev) => verarbeite(ev, 'galerie') });
+    box.append(kamera, galerie, h('div', { class: 'knopfzeile' },
+      h('button', { class: 'knopf primaer', onclick: () => kamera.click() }, '📷 Foto aufnehmen'),
+      h('button', { class: 'knopf', onclick: () => galerie.click() }, 'Aus Galerie')));
+  }
+  zeichne();
+  return box;
+}
+
+function fotoKarte(f, nurAnzeigen, loeschen) {
+  const karte = h('figure', { class: 'foto-karte' });
+  const img = h('img', { src: bildUrl(f.vorschau || f.blob), alt: f.unterschrift || `Foto ${f.nr}`, onclick: () => fotoGross(f, nurAnzeigen, loeschen) });
+  karte.append(h('div', { class: 'foto-nr' }, `Foto ${f.nr}`), img);
+  if (nurAnzeigen) {
+    if (f.unterschrift) karte.append(h('figcaption', {}, f.unterschrift));
+  } else {
+    karte.append(h('input', {
+      type: 'text', class: 'unterschrift', placeholder: 'Bildunterschrift', value: f.unterschrift || '', autocomplete: 'off',
+      oninput: (ev) => { f.unterschrift = ev.target.value; db.speichere('fotos', f); },
+    }));
+  }
+  return karte;
+}
+
+function fotoGross(f, nurAnzeigen, loeschen) {
+  const dlg = h('dialog', { class: 'dialog foto-dialog' },
+    h('img', { src: bildUrl(f.blob), alt: f.unterschrift || `Foto ${f.nr}` }),
+    h('p', {}, h('strong', {}, `Foto ${f.nr}`), f.unterschrift ? ` – ${f.unterschrift}` : ''),
+    h('p', { class: 'feld-hinweis' }, `${datumDE(f.aufgenommen)} · ${f.quelle === 'galerie' ? 'aus Galerie' : 'Kamera'} · ${standortText(f.standort)} · ${f.breite}×${f.hoehe} px, ${groesseText(f.blob.size)}`),
+    h('div', { class: 'dialog-knoepfe' },
+      nurAnzeigen ? null : h('button', {
+        class: 'knopf gefahr',
+        onclick: async () => {
+          if (!(await bestaetigen(`Foto ${f.nr} löschen?`, 'Löschen', 'Abbrechen', true))) return;
+          dlg.close();
+          loeschen();
+        },
+      }, 'Löschen'),
+      h('button', { class: 'knopf primaer', autofocus: true, onclick: () => dlg.close() }, 'Schließen')));
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
+}
+
+return { neueFotoId, standortAbfragen, standortText, fotosAufnehmen, ladeFotos, fotoFeld };
+})();
+
+// ===== js/skizzenlogik.js =====
+const Modul_skizzenlogik = await (async () => {
+// Skizzen: Datenmodell, Zeichnen, Trefferprüfung, Abgleich der Eingriffsstellen.
+// Ohne Bildschirmelemente (außer dem übergebenen Zeichenkontext) – deshalb automatisch testbar.
+//
+// Eine Skizze ist ein Datensatz im Speicher „skizzen“:
+// { id, buchId, feldKey, breite, hoehe, grundlage: null | { blob, breite, hoehe },
+//   elemente: [ {typ:'strich', farbe, dicke, punkte:[[x,y],…]} | {typ:'marke', nr, x, y} | {typ:'text', text, x, y, farbe} ],
+//   angelegt, geaendert, bild: Blob (fertig gezeichnet, für Vorschau und Ausgabe) }
+// Koordinaten sind Pixel der Skizze (breite × hoehe), unabhängig von der Bildschirmgröße.
+
+const LEER_BREITE = 1600;
+const LEER_HOEHE = 1200;
+const FARBEN = { schwarz: '#111111', rot: '#c4001d', blau: '#0047b3' };
+const FUSS_HOEHE = 56; // Leiste unter der Skizze in der fertigen Grafik
+
+// Größen richten sich nach der längeren Seite der Skizze, damit Marken und Text auf
+// leerer Fläche und auf Fotos gleich groß wirken (auf dem Handy ca. 13 Pixel Markenradius).
+function masse(skizze) {
+  const l = Math.max(skizze.breite, skizze.hoehe);
+  return {
+    radius: Math.round(l * 0.04),
+    text: Math.round(l * 0.04),
+    duenn: Math.max(2, Math.round(l * 0.005)),
+    dick: Math.max(4, Math.round(l * 0.013)),
+  };
+}
+
+function neueSkizze({ id, buchId, feldKey, grundlage = null, jetzt = new Date().toISOString() }) {
+  const breite = grundlage ? grundlage.breite : LEER_BREITE;
+  const hoehe = grundlage ? grundlage.hoehe : LEER_HOEHE;
+  return { id, buchId, feldKey, breite, hoehe, grundlage, elemente: [], angelegt: jetzt, geaendert: jetzt, bild: null };
+}
+
+// Kleinste freie Nummer (Lücken werden zuerst gefüllt). `belegt` sind Nummern auch aus anderen Skizzen desselben Feldes.
+function naechsteMarkenNr(belegt) {
+  const set = new Set(belegt.map(Number));
+  let n = 1;
+  while (set.has(n)) n++;
+  return n;
+}
+
+function markenNummern(skizzen) {
+  const nrn = [];
+  for (const s of skizzen) for (const e of s.elemente || []) if (e.typ === 'marke') nrn.push(e.nr);
+  return nrn.sort((a, b) => a - b);
+}
+
+// ---------- Eingriffsstellen ----------
+// Vergleicht die Marken der Skizze mit den Zeilen der Tabelle (Spalte „nr“).
+function eingriffsAbgleich(markenNrn, zeilen) {
+  const marken = new Set(markenNrn.map(Number));
+  const zeilenNrn = new Set();
+  for (const z of zeilen || []) {
+    if (z._vorschlag) continue;
+    const n = Number(String(z.nr ?? '').trim().replace(',', '.'));
+    if (Number.isInteger(n) && n > 0) zeilenNrn.add(n);
+  }
+  return {
+    ohneZeile: [...marken].filter((n) => !zeilenNrn.has(n)).sort((a, b) => a - b),
+    ohneMarke: [...zeilenNrn].filter((n) => !marken.has(n)).sort((a, b) => a - b),
+  };
+}
+
+// Legt für Marken ohne Tabellenzeile eine leere Zeile an. Vorhandene Zeilen bleiben unverändert.
+function zeilenFuerMarken(markenNrn, zeilen, neueZeilenId) {
+  const { ohneZeile } = eingriffsAbgleich(markenNrn, zeilen);
+  const neu = [...(zeilen || [])];
+  for (const n of ohneZeile) neu.push({ id: neueZeilenId(), nr: String(n) });
+  return neu.sort((a, b) => (Number(a.nr) || 1e9) - (Number(b.nr) || 1e9));
+}
+
+// Entfernt die Zeile zu einer gelöschten Marke nur dann, wenn sie außer der Nummer nichts enthält.
+function zeileZuMarkeEntfernen(nr, zeilen) {
+  return (zeilen || []).filter((z) => {
+    if (String(z.nr) !== String(nr)) return true;
+    return Object.entries(z).some(([k, v]) => !['id', 'nr', '_vorschlag'].includes(k) && v !== undefined && String(v).trim() !== '');
+  });
+}
+
+// ---------- Trefferprüfung (Löschen, Verschieben) ----------
+function abstandZuStrecke(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const l2 = dx * dx + dy * dy;
+  let t = l2 === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+function textBreite(text, groesse) {
+  return String(text).length * groesse * 0.58; // Schätzung, reicht für die Trefferprüfung
+}
+
+// Index des obersten Elements an Punkt (x,y) oder -1. `toleranz` in Skizzenpixeln.
+// m: Ergebnis von masse(skizze).
+function elementBei(elemente, x, y, m, toleranz = 24, nurVerschiebbar = false) {
+  for (let i = elemente.length - 1; i >= 0; i--) {
+    const e = elemente[i];
+    if (e.typ === 'marke' && Math.hypot(x - e.x, y - e.y) <= m.radius + toleranz) return i;
+    if (e.typ === 'text') {
+      const b = textBreite(e.text, m.text);
+      if (x >= e.x - toleranz && x <= e.x + b + toleranz && y >= e.y - m.text - toleranz && y <= e.y + toleranz) return i;
+    }
+    if (e.typ === 'strich' && !nurVerschiebbar) {
+      const p = e.punkte;
+      if (p.length === 1 && Math.hypot(x - p[0][0], y - p[0][1]) <= toleranz + e.dicke) return i;
+      for (let j = 1; j < p.length; j++) {
+        if (abstandZuStrecke(x, y, p[j - 1][0], p[j - 1][1], p[j][0], p[j][1]) <= toleranz + e.dicke / 2) return i;
+      }
+    }
+  }
+  return -1;
+}
+
+// Punkte eines Strichs ausdünnen: Punkte näher als `min` Pixel am Vorgänger entfallen (spart Speicher).
+function duenneAus(punkte, min = 2) {
+  if (punkte.length <= 2) return punkte.map((p) => [Math.round(p[0]), Math.round(p[1])]);
+  const r = [punkte[0]];
+  for (let i = 1; i < punkte.length - 1; i++) {
+    const l = r[r.length - 1];
+    if (Math.hypot(punkte[i][0] - l[0], punkte[i][1] - l[1]) >= min) r.push(punkte[i]);
+  }
+  r.push(punkte[punkte.length - 1]);
+  return r.map((p) => [Math.round(p[0]), Math.round(p[1])]);
+}
+
+// ---------- Zeichnen ----------
+// ctx: 2D-Kontext, bereits so skaliert, dass 1 Einheit = 1 Skizzenpixel.
+// hintergrund: geladenes Bild (ImageBitmap/HTMLImageElement) oder null.
+function zeichne(ctx, skizze, hintergrund, { raster = false, auswahl = -1 } = {}) {
+  const { breite, hoehe } = skizze;
+  const m = masse(skizze);
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, breite, hoehe);
+  if (hintergrund) ctx.drawImage(hintergrund, 0, 0, breite, hoehe);
+  if (raster && !hintergrund) {
+    // Nur Zeichenhilfe im Editor, erscheint nicht in der fertigen Skizze.
+    ctx.strokeStyle = '#e3e8ee';
+    ctx.lineWidth = 2;
+    for (let x = 100; x < breite; x += 100) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, hoehe); ctx.stroke(); }
+    for (let y = 100; y < hoehe; y += 100) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(breite, y); ctx.stroke(); }
+  }
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // Reihenfolge: Striche unten, darüber Texte, ganz oben die Marken – damit Nummern immer lesbar bleiben.
+  const reihe = (e) => (e.typ === 'strich' ? 0 : e.typ === 'text' ? 1 : 2);
+  const sortiert = skizze.elemente.map((e, i) => [e, i]).sort((a, b) => reihe(a[0]) - reihe(b[0]) || a[1] - b[1]);
+  sortiert.forEach(([e, i]) => {
+    if (e.typ === 'strich') {
+      ctx.strokeStyle = e.farbe;
+      ctx.fillStyle = e.farbe;
+      ctx.lineWidth = e.dicke;
+      const p = e.punkte;
+      if (p.length === 1) {
+        ctx.beginPath(); ctx.arc(p[0][0], p[0][1], e.dicke / 2, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]);
+        for (let j = 1; j < p.length; j++) ctx.lineTo(p[j][0], p[j][1]);
+        ctx.stroke();
+      }
+    } else if (e.typ === 'marke') {
+      ctx.beginPath(); ctx.arc(e.x, e.y, m.radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.lineWidth = Math.max(3, m.radius * 0.18); ctx.strokeStyle = FARBEN.rot; ctx.stroke();
+      ctx.fillStyle = FARBEN.rot;
+      ctx.font = `bold ${Math.round(m.radius * 1.15)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(e.nr), e.x, e.y + 2);
+    } else if (e.typ === 'text') {
+      ctx.font = `600 ${m.text}px system-ui, sans-serif`;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      // weißer Rand, damit Text auch auf Fotos lesbar ist
+      ctx.lineWidth = Math.max(4, m.text * 0.2); ctx.strokeStyle = '#ffffff'; ctx.strokeText(e.text, e.x, e.y);
+      ctx.fillStyle = e.farbe || FARBEN.schwarz; ctx.fillText(e.text, e.x, e.y);
+    }
+    if (i === auswahl) {
+      ctx.save();
+      ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeStyle = '#ffb000';
+      if (e.typ === 'marke') { ctx.beginPath(); ctx.arc(e.x, e.y, m.radius * 1.4, 0, Math.PI * 2); ctx.stroke(); }
+      if (e.typ === 'text') ctx.strokeRect(e.x - 10, e.y - m.text - 10, textBreite(e.text, m.text) + 20, m.text + 24);
+      ctx.restore();
+    }
+  });
+  ctx.restore();
+}
+
+// Fußleiste der fertigen Grafik: Kennzeichnung als Handskizze mit Datum und Erfasser.
+function fussText(skizze, erfasser, datumText) {
+  const teile = ['Handskizze, nicht maßstäblich'];
+  if (datumText) teile.push(datumText);
+  if (erfasser) teile.push(`Erfasser: ${erfasser}`);
+  return teile.join(' · ');
+}
+
+function verschiebe(element, dx, dy) {
+  if (element.typ === 'marke' || element.typ === 'text') {
+    element.x = Math.round(element.x + dx);
+    element.y = Math.round(element.y + dy);
+  }
+}
+
+// Hält einen Punkt innerhalb der Zeichenfläche.
+function begrenze(x, y, skizze) {
+  return [Math.max(0, Math.min(skizze.breite, x)), Math.max(0, Math.min(skizze.hoehe, y))];
+}
+
+return { LEER_BREITE, LEER_HOEHE, FARBEN, FUSS_HOEHE, masse, neueSkizze, naechsteMarkenNr, markenNummern, eingriffsAbgleich, zeilenFuerMarken, zeileZuMarkeEntfernen, textBreite, elementBei, duenneAus, zeichne, fussText, verschiebe, begrenze };
+})();
+
+// ===== js/skizzen.js =====
+const Modul_skizzen = await (async () => {
+// Skizzen zeichnen: leere Fläche oder Foto (Handskizze, Plan, Anlage) als Grundlage,
+// Stift, Text, nummerierte Marken für Eingriffsstellen, Verschieben, Löschen, Rückgängig.
+// Jede Änderung wird sofort gespeichert.
+const db = Modul_db;
+const S = Modul_skizzenlogik;
+const { h, leere, meldung, bestaetigen, sprungziel } = Modul_ui;
+const { verkleinere, ladeBild, canvasZuBlob, bildUrl } = Modul_bilder;
+const { feldIndex, feldKey, neueZeilenId } = Modul_gliederung;
+function neueSkizzenId() {
+  return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+async function ladeSkizzen(ids) {
+  const r = [];
+  for (const id of ids || []) {
+    const s = await db.lese('skizzen', id);
+    if (s) r.push(s);
+  }
+  return r;
+}
+
+// Fertige Grafik (mit Fußleiste) erzeugen und in der Skizze ablegen.
+async function bildErzeugen(skizze, hintergrund) {
+  if (skizze.grundlage && !hintergrund) hintergrund = await ladeBild(skizze.grundlage.blob);
+  const c = document.createElement('canvas');
+  c.width = skizze.breite;
+  c.height = skizze.hoehe + S.FUSS_HOEHE;
+  const ctx = c.getContext('2d');
+  S.zeichne(ctx, skizze, hintergrund, {});
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, skizze.hoehe, skizze.breite, S.FUSS_HOEHE);
+  ctx.fillStyle = '#333333';
+  ctx.font = '26px system-ui, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  const datum = new Date(skizze.angelegt).toLocaleDateString('de-DE');
+  ctx.fillText(S.fussText(skizze, skizze.erfasser, datum), 16, skizze.hoehe + S.FUSS_HOEHE / 2);
+  skizze.bild = await canvasZuBlob(c, skizze.grundlage ? 'image/jpeg' : 'image/png', 0.88);
+  skizze.bildStand = skizze.geaendert;
+  return skizze.bild;
+}
+
+// Vorschau mit aktuellem Bild; erzeugt es neu, falls es veraltet ist (z. B. nach Absturz).
+async function aktuellesBild(s) {
+  if (!s.bild || s.bildStand !== s.geaendert) {
+    await bildErzeugen(s);
+    await db.speichere('skizzen', s);
+  }
+  return s.bild;
+}
+
+// ---------- Feld im Kapitel ----------
+// kontext: { buch, aendern(buch), erfasser }
+function skizzenFeld({ kontext, kap, feld, ids, setzeIds, nurAnzeigen = false, hinweisMarken = '' }) {
+  const box = h('div', { class: 'skizzenfeld' });
+  const raster = h('div', { class: 'foto-raster' });
+  box.append(raster);
+  const key = feldKey(kap.id, feld.id);
+
+  (async () => {
+    const skizzen = await ladeSkizzen(ids);
+    leere(raster);
+    if (!skizzen.length) raster.append(h('p', { class: 'leer' }, nurAnzeigen ? '(noch keine Skizze)' : 'Noch keine Skizze.'));
+    for (const s of skizzen) {
+      const bild = await aktuellesBild(s);
+      const marken = S.markenNummern([s]);
+      const inhalt = [
+        h('img', { src: bildUrl(bild), alt: 'Skizze', class: 'skizzen-vorschau' }),
+        h('div', { class: 'foto-nr' }, marken.length ? `Marken: ${marken.join(', ')}` : (s.grundlage ? 'auf Foto' : 'Skizze')),
+      ];
+      raster.append(nurAnzeigen
+        ? h('figure', { class: 'foto-karte' }, ...inhalt)
+        : h('a', { class: 'foto-karte', href: `#/buch/${encodeURIComponent(kontext.buch.id)}/skizze/${encodeURIComponent(s.id)}` }, ...inhalt, h('span', { class: 'knopf klein' }, 'Bearbeiten')));
+    }
+  })();
+
+  if (nurAnzeigen) return box;
+  if (hinweisMarken) box.append(h('p', { class: 'feld-hinweis' }, hinweisMarken));
+
+  const anlegen = async (grundlage) => {
+    const s = S.neueSkizze({ id: neueSkizzenId(), buchId: kontext.buch.id, feldKey: key, grundlage });
+    s.erfasser = kontext.erfasser || '';
+    await bildErzeugen(s);
+    await db.speichere('skizzen', s);
+    await db.allesGespeichert();
+    setzeIds([...(ids || []), s.id]);
+    await db.allesGespeichert();
+    location.hash = `#/buch/${encodeURIComponent(kontext.buch.id)}/skizze/${encodeURIComponent(s.id)}`;
+  };
+  const mitFoto = async (ev) => {
+    const datei = ev.target.files[0];
+    ev.target.value = '';
+    if (!datei) return;
+    try {
+      const v = await verkleinere(datei);
+      await anlegen({ blob: v.blob, breite: v.breite, hoehe: v.hoehe });
+    } catch (e) {
+      meldung(`Foto konnte nicht geladen werden: ${e.message}`, 'fehler');
+    }
+  };
+  const kamera = h('input', { type: 'file', accept: 'image/*', capture: 'environment', class: 'versteckt', onchange: mitFoto });
+  const galerie = h('input', { type: 'file', accept: 'image/*', class: 'versteckt', onchange: mitFoto });
+  box.append(kamera, galerie,
+    h('button', { class: 'knopf primaer breit', onclick: () => anlegen(null) }, '✏️ Neue Skizze (leere Fläche)'),
+    h('div', { class: 'knopfzeile' },
+      h('button', { class: 'knopf', onclick: () => kamera.click() }, '📷 Handskizze/Plan fotografieren'),
+      h('button', { class: 'knopf', onclick: () => galerie.click() }, 'Foto aus Galerie')),
+    h('p', { class: 'feld-hinweis' }, 'Auf dem Foto kann anschließend gezeichnet und markiert werden.'));
+  return box;
+}
+
+// ---------- Zeichenbildschirm ----------
+// umgebung: { app, kopf, fuss, ladeBuch, gliederungFuer, aendern }
+async function bildschirmSkizze(umgebung, buchId, skizzeId) {
+  const { app, kopf, fuss, ladeBuch, gliederungFuer, aendern } = umgebung;
+  const buch = await ladeBuch(buchId);
+  const { g } = await gliederungFuer(buch);
+  const skizze = await db.lese('skizzen', skizzeId);
+  if (!skizze) throw new Error('Diese Skizze gibt es nicht (mehr).');
+  const ort = feldIndex(g).get(skizze.feldKey);
+  if (!ort) throw new Error(`Das Feld ${skizze.feldKey} gibt es in der Vorlage nicht.`);
+  const { kapitel: kap, feld } = ort;
+  const zurueck = `#/buch/${encodeURIComponent(buch.id)}/kapitel/${encodeURIComponent(kap.id)}`;
+  sprungziel.key = skizze.feldKey; // nach der Rückkehr zum Feld scrollen
+  const tabellenKey = feld.marken || null; // z. B. "A4_1.eingriffsstellen"
+  const tabellenFeld = tabellenKey ? feldIndex(g).get(tabellenKey)?.feld : null;
+
+  const hintergrund = skizze.grundlage ? await ladeBild(skizze.grundlage.blob) : null;
+  // Marken der anderen Skizzen desselben Feldes – Nummern bleiben über alle Skizzen eindeutig.
+  const andereIds = ((buch.werte[skizze.feldKey] || {}).wert || []).filter((id) => id !== skizze.id);
+  const andereMarken = S.markenNummern(await ladeSkizzen(andereIds));
+
+  let modus = 'stift';
+  let farbe = S.FARBEN.schwarz;
+  const m = S.masse(skizze);
+  let dicke = m.duenn;
+  let auswahl = -1;
+  const rueck = [];
+  const vor = [];
+
+  const canvas = h('canvas', { class: 'zeichenflaeche', width: skizze.breite, height: skizze.hoehe });
+  const ctx = canvas.getContext('2d');
+  let geplant = false;
+  let laufenderStrich = null;
+  const neuZeichnen = () => {
+    if (geplant) return;
+    geplant = true;
+    requestAnimationFrame(() => {
+      geplant = false;
+      const anzeigen = laufenderStrich ? { ...skizze, elemente: [...skizze.elemente, laufenderStrich] } : skizze;
+      S.zeichne(ctx, anzeigen, hintergrund, { raster: true, auswahl });
+    });
+  };
+
+  // ----- Speichern -----
+  let bildTimer = null;
+  const speichern = () => {
+    skizze.geaendert = new Date().toISOString();
+    db.speichere('skizzen', skizze);
+    clearTimeout(bildTimer);
+    bildTimer = setTimeout(async () => { await bildErzeugen(skizze, hintergrund); db.speichere('skizzen', skizze); }, 800);
+  };
+  const tabelle = () => {
+    if (!tabellenKey) return null;
+    if (!buch.werte[tabellenKey]) buch.werte[tabellenKey] = { wert: [], status: null, geaendert: null };
+    return buch.werte[tabellenKey];
+  };
+  const alleMarken = () => [...andereMarken, ...S.markenNummern([skizze])];
+  const tabelleAbgleichen = () => {
+    const t = tabelle();
+    if (!t) return;
+    const alt = JSON.stringify(t.wert || []);
+    t.wert = S.zeilenFuerMarken(alleMarken(), t.wert || [], neueZeilenId);
+    if (JSON.stringify(t.wert) !== alt) { t.status = null; t.geaendert = new Date().toISOString(); aendern(buch); }
+  };
+  const merke = () => { rueck.push(JSON.stringify(skizze.elemente)); if (rueck.length > 100) rueck.shift(); vor.length = 0; };
+  const geaendert = () => { speichern(); tabelleAbgleichen(); neuZeichnen(); zeichneMarkenListe(); zeichneWerkzeug(); };
+
+  // ----- Eingabe auf der Zeichenfläche -----
+  const punkt = (ev) => {
+    const r = canvas.getBoundingClientRect();
+    return S.begrenze((ev.clientX - r.left) * (skizze.breite / r.width), (ev.clientY - r.top) * (skizze.hoehe / r.height), skizze);
+  };
+  const toleranz = () => 14 * (skizze.breite / canvas.getBoundingClientRect().width); // ca. 14 Bildschirmpixel
+  let ziehen = null;
+
+  canvas.addEventListener('pointerdown', async (ev) => {
+    ev.preventDefault();
+    const [x, y] = punkt(ev);
+    if (modus === 'stift') {
+      canvas.setPointerCapture(ev.pointerId);
+      laufenderStrich = { typ: 'strich', farbe, dicke, punkte: [[x, y]] };
+      neuZeichnen();
+    } else if (modus === 'marke') {
+      merke();
+      skizze.elemente.push({ typ: 'marke', nr: S.naechsteMarkenNr(alleMarken()), x: Math.round(x), y: Math.round(y) });
+      geaendert();
+    } else if (modus === 'text') {
+      const text = await textAbfragen();
+      if (!text) return;
+      merke();
+      skizze.elemente.push({ typ: 'text', text, x: Math.round(x), y: Math.round(y), farbe });
+      geaendert();
+    } else if (modus === 'verschieben') {
+      const i = S.elementBei(skizze.elemente, x, y, m, toleranz(), true);
+      auswahl = i;
+      if (i >= 0) { canvas.setPointerCapture(ev.pointerId); merke(); ziehen = { i, x, y, bewegt: false }; }
+      neuZeichnen();
+    } else if (modus === 'loeschen') {
+      const i = S.elementBei(skizze.elemente, x, y, m, toleranz());
+      if (i < 0) { meldung('Hier ist nichts zum Löschen.'); return; }
+      merke();
+      const [weg] = skizze.elemente.splice(i, 1);
+      if (weg.typ === 'marke' && tabelle()) {
+        const t = tabelle();
+        t.wert = S.zeileZuMarkeEntfernen(weg.nr, t.wert || []);
+        t.geaendert = new Date().toISOString();
+        aendern(buch);
+      }
+      geaendert();
+    }
+  });
+  canvas.addEventListener('pointermove', (ev) => {
+    if (laufenderStrich) {
+      const evs = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [ev];
+      for (const e of (evs.length ? evs : [ev])) laufenderStrich.punkte.push(punkt(e));
+      neuZeichnen();
+    } else if (ziehen) {
+      const [x, y] = punkt(ev);
+      S.verschiebe(skizze.elemente[ziehen.i], x - ziehen.x, y - ziehen.y);
+      ziehen.x = x; ziehen.y = y; ziehen.bewegt = true;
+      neuZeichnen();
+    }
+  });
+  const ende = () => {
+    if (laufenderStrich) {
+      const s = laufenderStrich;
+      laufenderStrich = null;
+      s.punkte = S.duenneAus(s.punkte);
+      merke();
+      skizze.elemente.push(s);
+      geaendert();
+    } else if (ziehen) {
+      if (ziehen.bewegt) geaendert(); else rueck.pop();
+      ziehen = null;
+    }
+  };
+  canvas.addEventListener('pointerup', ende);
+  canvas.addEventListener('pointercancel', ende);
+
+  // ----- Werkzeuge -----
+  const werkzeug = h('div', { class: 'werkzeug' });
+  const zeichneWerkzeug = () => {
+    leere(werkzeug);
+    const modusKnopf = (m, text) => h('button', { class: `wz ${modus === m ? 'aktiv' : ''}`, onclick: () => { modus = m; auswahl = -1; neuZeichnen(); zeichneWerkzeug(); } }, text);
+    werkzeug.append(h('div', { class: 'wz-zeile' },
+      modusKnopf('stift', '✏️ Stift'),
+      modusKnopf('text', 'T Text'),
+      modusKnopf('marke', tabellenKey ? '① Eingriffsstelle' : '① Marke'),
+    ), h('div', { class: 'wz-zeile' },
+      modusKnopf('verschieben', '✋ Verschieben'),
+      modusKnopf('loeschen', '🧽 Löschen'),
+    ));
+    if (modus === 'stift' || modus === 'text') {
+      const farbKnopf = (name, wert) => h('button', { class: `wz farbe ${farbe === wert ? 'aktiv' : ''}`, style: `--f:${wert}`, onclick: () => { farbe = wert; zeichneWerkzeug(); } }, name);
+      const zeile = h('div', { class: 'wz-zeile' }, farbKnopf('schwarz', S.FARBEN.schwarz), farbKnopf('rot', S.FARBEN.rot), farbKnopf('blau', S.FARBEN.blau));
+      werkzeug.append(zeile);
+      if (modus === 'stift') {
+        werkzeug.append(h('div', { class: 'wz-zeile' },
+          h('button', { class: `wz ${dicke === m.duenn ? 'aktiv' : ''}`, onclick: () => { dicke = m.duenn; zeichneWerkzeug(); } }, 'dünn'),
+          h('button', { class: `wz ${dicke === m.dick ? 'aktiv' : ''}`, onclick: () => { dicke = m.dick; zeichneWerkzeug(); } }, 'dick')));
+      }
+    }
+    const hilfe = {
+      stift: 'Mit dem Finger zeichnen.',
+      text: 'Auf die Stelle tippen, an der die Beschriftung stehen soll.',
+      marke: tabellenKey ? 'Auf die Eingriffsstelle tippen – sie bekommt die nächste Nummer und eine Zeile in der Tabelle.' : 'Auf die Stelle tippen – sie bekommt die nächste Nummer.',
+      verschieben: 'Marke oder Text antippen und ziehen.',
+      loeschen: 'Strich, Text oder Marke antippen.',
+    }[modus];
+    werkzeug.append(h('div', { class: 'wz-zeile' },
+      h('button', { class: 'wz', disabled: rueck.length === 0, onclick: () => { vor.push(JSON.stringify(skizze.elemente)); skizze.elemente = JSON.parse(rueck.pop()); auswahl = -1; geaendert(); } }, '↶ Rückgängig'),
+      h('button', { class: 'wz', disabled: vor.length === 0, onclick: () => { rueck.push(JSON.stringify(skizze.elemente)); skizze.elemente = JSON.parse(vor.pop()); auswahl = -1; geaendert(); } }, '↷ Wiederholen')),
+    h('p', { class: 'feld-hinweis' }, hilfe));
+  };
+
+  // ----- Liste der Eingriffsstellen (verknüpft mit der Tabelle) -----
+  const markenListe = h('div', { class: 'markenliste' });
+  const zeichneMarkenListe = () => {
+    leere(markenListe);
+    if (!tabellenFeld) return;
+    const t = tabelle();
+    const zeilen = t.wert || [];
+    const meine = S.markenNummern([skizze]);
+    const abgleich = S.eingriffsAbgleich(alleMarken(), zeilen);
+    markenListe.append(h('h2', {}, `${tabellenFeld.label} (${kap.nr || kap.id})`));
+    if (!meine.length) markenListe.append(h('p', { class: 'leer' }, 'Noch keine Eingriffsstelle markiert. Werkzeug „① Eingriffsstelle“ wählen und auf die Stelle tippen.'));
+    const spalten = tabellenFeld.spalten.filter((s) => s.id !== 'nr');
+    for (const nr of meine) {
+      const z = zeilen.find((x) => String(x.nr) === String(nr));
+      if (!z) continue;
+      const karte = h('div', { class: 'zeile-karte' }, h('div', { class: 'zeile-nr' }, h('span', { class: 'marken-kreis' }, String(nr)), ' Eingriffsstelle'));
+      for (const s of spalten) {
+        karte.append(h('label', { class: 'feld klein' }, h('span', { class: 'feld-label' }, s.label),
+          h('input', {
+            type: 'text', value: z[s.id] ?? '', autocomplete: 'off',
+            oninput: (ev) => { z[s.id] = ev.target.value; delete z._vorschlag; t.status = null; t.geaendert = new Date().toISOString(); aendern(buch); },
+          })));
+      }
+      markenListe.append(karte);
+    }
+    if (abgleich.ohneMarke.length) {
+      markenListe.append(h('div', { class: 'hinweis warnung' }, `In der Tabelle, aber nicht in der Skizze markiert: Nr. ${abgleich.ohneMarke.join(', ')}.`));
+    }
+  };
+
+  // ----- Aufbau -----
+  leere(app);
+  const main = h('main', { class: 'skizzen-main' },
+    h('div', { class: 'zeichen-rahmen' }, canvas),
+    werkzeug,
+    markenListe,
+    h('button', {
+      class: 'knopf gefahr breit',
+      onclick: async () => {
+        if (!(await bestaetigen('Diese Skizze löschen? Das lässt sich nicht rückgängig machen.', 'Löschen', 'Abbrechen', true))) return;
+        clearTimeout(bildTimer);
+        const e = buch.werte[skizze.feldKey];
+        if (e) { e.wert = (e.wert || []).filter((id) => id !== skizze.id); e.geaendert = new Date().toISOString(); }
+        const t = tabelle();
+        if (t) for (const nr of S.markenNummern([skizze])) t.wert = S.zeileZuMarkeEntfernen(nr, t.wert || []);
+        await aendern(buch);
+        await db.loesche('skizzen', skizze.id);
+        meldung('Skizze gelöscht.');
+        location.hash = zurueck;
+      },
+    }, 'Skizze löschen'));
+  const fertig = async () => {
+    clearTimeout(bildTimer);
+    await bildErzeugen(skizze, hintergrund);
+    await db.speichere('skizzen', skizze);
+    location.hash = zurueck;
+  };
+  app.append(kopf(`Skizze: ${feld.label}`, null), main, fuss(h('button', { class: 'knopf primaer', onclick: fertig }, 'Fertig')));
+  // Zurück-Pfeil im Kopf: ebenfalls über „fertig“, damit das Bild aktuell ist.
+  const pfeil = h('button', { class: 'zurueck', 'aria-label': 'Zurück', onclick: fertig }, '‹');
+  app.querySelector('.zurueck-platz')?.replaceWith(pfeil);
+
+  zeichneWerkzeug();
+  zeichneMarkenListe();
+  tabelleAbgleichen();
+  neuZeichnen();
+}
+
+function textAbfragen() {
+  return new Promise((resolve) => {
+    const inp = h('input', { type: 'text', autocomplete: 'off', placeholder: 'z. B. Zulauf, Drossel, Tor' });
+    const fertig = (wert) => { dlg.close(); resolve(wert); };
+    const dlg = h('dialog', { class: 'dialog' },
+      h('label', { class: 'feld' }, h('span', { class: 'feld-label' }, 'Beschriftung'), inp),
+      h('div', { class: 'dialog-knoepfe' },
+        h('button', { class: 'knopf', onclick: () => fertig('') }, 'Abbrechen'),
+        h('button', { class: 'knopf primaer', onclick: () => fertig(inp.value.trim()) }, 'Einfügen')));
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') fertig(inp.value.trim()); });
+    dlg.addEventListener('close', () => { dlg.remove(); resolve(''); });
+    document.body.append(dlg);
+    dlg.showModal();
+    inp.focus();
+  });
+}
+
+return { neueSkizzenId, ladeSkizzen, bildErzeugen, skizzenFeld, bildschirmSkizze };
+})();
+
+// ===== js/sammeldiktat.js =====
+const Modul_sammeldiktat = await (async () => {
+// Sammeldiktat je Kapitel: freier Text → Vorschläge, welcher Wert in welches Feld gehört.
+// Ohne KI-Dienst: Zuordnung über Stichwörter und Wörter der Feldnamen. Ich bestätige oder korrigiere jeden Vorschlag;
+// was sich nicht zuordnen lässt, wird als Notiz zum Kapitel vorgeschlagen.
+const { bewerteMassEingabe } = Modul_masse;
+const FUELLWOERTER = new Set(['der', 'die', 'das', 'des', 'dem', 'den', 'und', 'oder', 'von', 'vom', 'für', 'mit', 'zur', 'zum', 'nach',
+  'sowie', 'bei', 'als', 'aus', 'ggf', 'z.b', 'vorhandene', 'vorhandener', 'angaben', 'angabe', 'optional', 'hinweise', 'test']);
+
+function norm(s) {
+  return String(s || '').toLowerCase().replace(/[()„“"]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Stichwörter eines Feldes oder einer Tabellenspalte: ausdrückliche + Wörter des Namens (ab 4 Buchstaben).
+function stichwoerter(feld) {
+  const eigene = (feld.stichwoerter || []).map(norm);
+  const ausLabel = norm(feld.label).split(/[\s/,.:;-]+/).filter((w) => w.length >= 4 && !FUELLWOERTER.has(w));
+  return [...new Set([...eigene, ...ausLabel])].filter(Boolean);
+}
+
+// Text in Sätze und Abschnitte zerlegen. Dezimalkommas („2,40“) bleiben erhalten.
+function zerlege(text) {
+  return String(text || '')
+    // Punkte in Abkürzungen sind kein Satzende
+    .replace(/\b(ca|bzw|ggf|evtl|nr|z\.\s?b|u\.\s?a)\./gi, (m) => m.replace(/\./g, '\u2024'))
+    // Satzende: Punkt/Frage-/Ausrufezeichen/Semikolon vor Leerzeichen oder Textende („2.40“ bleibt eine Zahl)
+    .split(/[.!?;](?=\s|$)|\n+/)
+    .map((satz) => satz.split(/,\s+|,(?=\D)/).map((t) => t.replace(/\u2024/g, '.').trim()).filter(Boolean))
+    .filter((teile) => teile.length);
+}
+
+// Findet das Stichwort am Anfang eines Abschnitts (in den ersten drei Wörtern). Liefert { laenge, rest } oder null.
+// Mehrwortige Stichwörter („länge sohle“) passen auch in anderer Reihenfolge („Sohle Länge 24 m“);
+// das längste passende Stichwort gewinnt.
+function treffer(abschnitt, woerter) {
+  const n = String(abschnitt).replace(/\s+/g, ' ').trim();
+  const anfang = n.split(' ').slice(0, 3).map((w) => w.toLowerCase().replace(/[:,]$/, ''));
+  let best = null;
+  const nimm = (laenge, restAb) => {
+    if (!best || laenge > best.laenge) best = { laenge, rest: n.slice(restAb).replace(/^\s*(:|ist|beträgt|=)\s*/i, '').trim() };
+  };
+  for (const w of woerter) {
+    const re = new RegExp(`^((?:\\S+\\s+){0,2}?)${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|:)`, 'iu');
+    const m = n.match(re);
+    if (m) { nimm(w.length, m[0].length); continue; }
+    const teile = w.split(' ');
+    if (teile.length > 1 && teile.every((t) => anfang.includes(t))) {
+      // Rest beginnt nach dem letzten der Stichwort-Wörter
+      const letzter = Math.max(...teile.map((t) => anfang.indexOf(t)));
+      const ab = n.split(' ').slice(0, letzter + 1).join(' ').length;
+      nimm(w.length, ab);
+    }
+  }
+  return best;
+}
+
+function datumAusText(t) {
+  const m = String(t).match(/^(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+}
+
+// Wert für ein Feld aus dem Rest-Text. Liefert { wert, sicher, mass?, hinweis? } oder null.
+function wertFuerFeld(feld, rest) {
+  const roh = rest.trim();
+  const r = norm(roh);
+  switch (feld.art) {
+    case 'zahl': {
+      const b = bewerteMassEingabe(roh, feld);
+      if (b.zustand === 'leer') return null;
+      return { wert: roh, sicher: b.zustand === 'auto' || b.zustand === 'bestaetigen', bewertung: b };
+    }
+    case 'janein': {
+      if (/\b(nicht vorhanden|nein|kein|keine|fehlt|ohne)\b/.test(r) || r === '') {
+        return r === '' ? { wert: true, sicher: false } : { wert: false, sicher: true };
+      }
+      if (/\b(vorhanden|ja|gibt es)\b/.test(r)) return { wert: true, sicher: true };
+      return null;
+    }
+    case 'auswahl': {
+      const o = (feld.optionen || []).find((x) => norm(x) === r || r.includes(norm(x)) || (r.length >= 3 && norm(x).includes(r)));
+      return o ? { wert: o, sicher: true } : null;
+    }
+    case 'mehrfach': {
+      const os = (feld.optionen || []).filter((x) => r.includes(norm(x)));
+      return os.length ? { wert: os, sicher: true } : null;
+    }
+    case 'datum': {
+      const d = datumAusText(r);
+      return d ? { wert: d, sicher: true } : null;
+    }
+    case 'text':
+    case 'langtext':
+      return roh ? { wert: roh, sicher: true } : null;
+    default:
+      return null;
+  }
+}
+
+// Hauptfunktion. felder: sichtbare, bearbeitbare Felder des Kapitels.
+// Ergebnis: Liste von Vorschlägen
+//   { typ: 'feld', feldId, wert, sicher, bewertung?, quelle }
+//   { typ: 'zeile', feldId, zeile: {spalte: wert}, quelle }  (eine neue Tabellenzeile je Satz)
+//   { typ: 'notiz', text }
+function werteAus(text, felder) {
+  const kandidaten = felder.filter((f) => !f.aus && !['foto', 'skizze', 'tabelle', 'pruefprotokoll'].includes(f.art))
+    .map((f) => ({ f, w: stichwoerter(f) }));
+  const tabellen = felder.filter((f) => f.art === 'tabelle' && !f.aus);
+  const vorschlaege = [];
+  for (const satz of zerlege(text)) {
+    const offen = [];
+    for (const abschnitt of satz) {
+      let best = null;
+      for (const k of kandidaten) {
+        const t = treffer(abschnitt, k.w);
+        if (t && (!best || t.laenge > best.t.laenge)) best = { k, t };
+      }
+      const wert = best ? wertFuerFeld(best.k.f, best.t.rest) : null;
+      if (wert) vorschlaege.push({ typ: 'feld', feldId: best.k.f.id, ...wert, quelle: abschnitt });
+      else offen.push(abschnitt);
+    }
+    if (!offen.length) continue;
+    // Nicht zugeordnete Abschnitte eines Satzes: als neue Tabellenzeile, wenn das Kapitel genau eine Tabelle hat.
+    if (tabellen.length === 1) {
+      const tab = tabellen[0];
+      const zeile = {};
+      const sammel = tab.sammelSpalte || tab.spalten[tab.spalten.length - 1].id;
+      const erste = tab.spalten.find((s) => s.art !== 'zahl') || tab.spalten[0];
+      offen.forEach((abschnitt, i) => {
+        let ziel = null;
+        let rest = abschnitt;
+        for (const s of tab.spalten) {
+          const t = treffer(abschnitt, (s.stichwoerter || []).map(norm));
+          if (t) { ziel = s.id; rest = (s.stichwortBehalten ? abschnitt : t.rest) || abschnitt; break; }
+        }
+        if (!ziel) ziel = i === 0 ? erste.id : sammel;
+        zeile[ziel] = zeile[ziel] ? `${zeile[ziel]}; ${rest}` : rest;
+      });
+      vorschlaege.push({ typ: 'zeile', feldId: tab.id, zeile, quelle: offen.join(', ') });
+    } else {
+      vorschlaege.push({ typ: 'notiz', text: offen.join(', ') });
+    }
+  }
+  return vorschlaege;
+}
+
+return { stichwoerter, zerlege, wertFuerFeld, werteAus };
+})();
+
+// ===== js/diktat.js =====
+const Modul_diktat = await (async () => {
+// Oberfläche für Maße (Zahlfelder) und das Sammeldiktat je Kapitel.
+// Diktiert wird mit dem Mikrofon der Handy-Tastatur – die App nimmt selbst nichts auf.
+const { h, leere, meldung, mitwachsen } = Modul_ui;
+const { bewerteMassEingabe, massAnzeige, HERKUNFT } = Modul_masse;
+const { massText } = Modul_zahlen;
+const { werteAus, wertFuerFeld } = Modul_sammeldiktat;
+const { feldKey, neueZeilenId } = Modul_gliederung;
+// ---------- Zahlfeld mit Maßerkennung ----------
+// e: Eintrag im Beckenbuch, setzeWert(text): speichert (e.mass wird vorher gesetzt).
+function massFeld(feld, e, setzeWert) {
+  const info = h('div', { class: 'mass-info' });
+  const inp = h('input', {
+    type: 'text', inputmode: 'text', value: e.wert ?? '', autocomplete: 'off', enterkeyhint: 'done',
+    placeholder: feld.format === 'verhaeltnis' ? 'z. B. 1 zu 2' : feld.einheit ? `z. B. 2,40 ${feld.einheit}` : '',
+    oninput: (ev) => eingabe(ev.target.value),
+  });
+
+  const uebernehmen = (mass, text) => {
+    e.mass = { ...mass, fuer: text };
+    setzeWert(text);
+    zeige();
+  };
+  const eingabe = (text) => {
+    const b = bewerteMassEingabe(text, feld);
+    if (b.zustand === 'auto') e.mass = { ...b.mass, fuer: text.trim() };
+    else if (!e.mass || e.mass.fuer !== text.trim()) e.mass = null;
+    setzeWert(text);
+    zeige();
+  };
+  const zeige = () => {
+    leere(info);
+    const text = String(e.wert ?? '').trim();
+    if (!text) return;
+    const b = bewerteMassEingabe(text, feld);
+    if (e.mass && e.mass.fuer === text) {
+      info.append(h('div', { class: 'mass-ok' }, `✓ ${massAnzeige({ mass: e.mass })}`));
+    } else if (b.zustand === 'bestaetigen') {
+      info.append(h('div', { class: 'vorschlag' }, `Erkannt: ${massText({ erkannt: true, ...b.mass })}${b.hinweis ? ` (${b.hinweis})` : ''}`,
+        h('button', { class: 'knopf klein', onclick: () => uebernehmen(b.mass, text) }, 'Übernehmen')));
+    } else if (b.zustand === 'umrechnen') {
+      info.append(h('div', { class: 'vorschlag' }, `${b.hinweis} `,
+        h('button', { class: 'knopf klein', onclick: () => uebernehmen(b.umgerechnet, text) }, `Als ${massText({ erkannt: true, ...b.umgerechnet })} übernehmen`)));
+    } else if (b.zustand === 'fremd') {
+      info.append(h('div', { class: 'feld-warnung' }, `⚠ ${b.hinweis} Bitte prüfen – bleibt so lange als Text stehen.`));
+    } else if (b.zustand === 'unerkannt') {
+      info.append(h('div', { class: 'feld-warnung' }, `⚠ Keine Zahl erkannt${b.hinweis && b.hinweis !== 'keine Zahl erkannt' ? ` (${b.hinweis})` : ''} – bleibt als Text, zur Prüfung markiert.`));
+    }
+  };
+
+  // Herkunft des Maßes
+  const herkunft = h('div', { class: 'herkunft' });
+  const zeigeHerkunft = () => {
+    leere(herkunft);
+    for (const [k, t] of Object.entries(HERKUNFT)) {
+      herkunft.append(h('button', {
+        class: `chip ${e.herkunft === k ? 'aktiv' : ''}`,
+        onclick: () => { e.herkunft = e.herkunft === k ? null : k; setzeWert(e.wert ?? ''); zeigeHerkunft(); },
+      }, t));
+    }
+  };
+  zeige();
+  zeigeHerkunft();
+  return h('div', {},
+    h('div', { class: 'zahl-zeile' }, inp, feld.einheit && feld.einheit !== '1:n' ? h('span', { class: 'einheit' }, feld.einheit) : null),
+    info, herkunft);
+}
+
+// ---------- Sammeldiktat ----------
+// umgebung: { buch, kap, felder (sichtbar), aendern(buch), neuZeichnen() }
+function sammeldiktatBox({ buch, kap, felder, aendern, neuZeichnen }) {
+  buch.sammeldiktate = buch.sammeldiktate || {};
+  const box = h('details', { class: 'sammeldiktat', open: !!buch.sammeldiktate[kap.id] });
+  const liste = h('div', { class: 'vorschlagsliste' });
+  const ta = mitwachsen(h('textarea', {
+    rows: 3, placeholder: 'Frei diktieren, z. B. „Länge 32 Meter, Breite 14 Meter, Böschung 1 zu 2.“',
+    oninput: (ev) => { buch.sammeldiktate[kap.id] = ev.target.value; aendern(buch); },
+  }, buch.sammeldiktate[kap.id] || ''));
+
+  const bearbeitbar = felder.filter((f) => !f.aus && !['foto', 'skizze', 'pruefprotokoll'].includes(f.art));
+  const auswerten = () => {
+    leere(liste);
+    const vs = werteAus(ta.value, bearbeitbar);
+    if (!vs.length) { liste.append(h('p', { class: 'leer' }, 'Nichts erkannt.')); return; }
+    const offen = new Set(vs);
+    vs.forEach((v) => liste.append(vorschlagKarte(v, () => offen.delete(v))));
+    liste.append(h('button', {
+      class: 'knopf primaer breit',
+      onclick: () => {
+        for (const v of offen) anwenden(v);
+        offen.clear();
+        buch.sammeldiktate[kap.id] = '';
+        aendern(buch);
+        meldung('Übernommen.');
+        neuZeichnen();
+      },
+    }, 'Alle übernehmen'));
+  };
+
+  // Einen Vorschlag ins Beckenbuch schreiben.
+  const anwenden = (v) => {
+    const jetzt = new Date().toISOString();
+    if (v.ziel === 'verwerfen') return;
+    if (v.ziel === 'notiz' || (v.typ === 'notiz' && !v.ziel)) {
+      buch.notizen = buch.notizen || {};
+      const alt = buch.notizen[kap.id] || '';
+      buch.notizen[kap.id] = alt ? `${alt}\n${v.text ?? v.quelle}` : (v.text ?? v.quelle);
+      return;
+    }
+    const f = bearbeitbar.find((x) => x.id === (v.ziel || v.feldId));
+    if (!f) return;
+    const key = feldKey(kap.id, f.id);
+    const e = buch.werte[key] || (buch.werte[key] = { wert: undefined, status: null, geaendert: null });
+    if (v.typ === 'zeile') {
+      e.wert = [...(Array.isArray(e.wert) ? e.wert : []), { id: neueZeilenId(), ...v.zeile }];
+    } else if (f.art === 'zahl') {
+      const b = bewerteMassEingabe(v.wert, f);
+      e.wert = v.wert;
+      // Mit „Übernehmen“ bestätigt; unpassende Einheiten werden nicht umgerechnet und bleiben zur Prüfung.
+      e.mass = b.zustand === 'auto' || b.zustand === 'bestaetigen' ? { ...b.mass, fuer: String(v.wert).trim() } : null;
+    } else if (f.art === 'langtext' || f.art === 'text') {
+      const alt = String(e.wert ?? '').trim();
+      e.wert = alt ? `${alt}${f.art === 'langtext' ? '\n' : '; '}${v.wert}` : v.wert;
+    } else if (f.art === 'mehrfach') {
+      const set = new Set([...(e.wert || []), ...v.wert]);
+      e.wert = f.optionen.filter((o) => set.has(o));
+    } else {
+      e.wert = v.wert;
+    }
+    e.status = null;
+    e.geaendert = jetzt;
+  };
+
+  const vorschlagKarte = (v, erledigt) => {
+    const karte = h('div', { class: 'zeile-karte' });
+    const zeichne = () => {
+      leere(karte);
+      karte.append(h('div', { class: 'feld-hinweis' }, `„${v.quelle ?? v.text}“`));
+      // Ziel wählen
+      const sel = h('select', { class: 'ziel-auswahl', onchange: (ev) => {
+        v.ziel = ev.target.value;
+        const f = bearbeitbar.find((x) => x.id === v.ziel);
+        if (f && v.typ !== 'zeile') {
+          // Notiz einem Feld zuordnen bzw. anderes Feld wählen: Wert für das neue Feld neu lesen.
+          v.quelle = v.quelle ?? v.text;
+          const text = v.typ === 'feld' && typeof v.wert === 'string' ? v.wert : String(v.quelle);
+          v.typ = 'feld';
+          const neu = wertFuerFeld(f, text);
+          v.wert = neu ? neu.wert : text;
+        }
+        zeichne();
+      } });
+      const ziele = v.typ === 'zeile' ? bearbeitbar.filter((f) => f.id === v.feldId) : bearbeitbar.filter((f) => f.art !== 'tabelle');
+      for (const f of ziele) sel.append(h('option', { value: f.id, selected: (v.ziel || v.feldId) === f.id }, `→ ${f.label}`));
+      sel.append(h('option', { value: 'notiz', selected: v.ziel === 'notiz' || (!v.ziel && v.typ === 'notiz') }, '→ Notiz zum Kapitel'));
+      sel.append(h('option', { value: 'verwerfen', selected: v.ziel === 'verwerfen' }, '✗ verwerfen'));
+      karte.append(sel);
+      // Wert
+      if (v.typ === 'zeile') {
+        const tab = bearbeitbar.find((f) => f.id === v.feldId);
+        karte.append(h('ul', { class: 'zeilen-vorschau' }, tab.spalten.filter((s) => v.zeile[s.id]).map((s) => h('li', {}, `${s.label}: ${v.zeile[s.id]}`))));
+      } else if (v.typ === 'feld' && v.ziel !== 'notiz' && v.ziel !== 'verwerfen') {
+        const f = bearbeitbar.find((x) => x.id === (v.ziel || v.feldId));
+        const anzeige = typeof v.wert === 'boolean' ? (v.wert ? 'Ja' : 'Nein') : Array.isArray(v.wert) ? v.wert.join(', ') : String(v.wert);
+        karte.append(h('div', { class: 'vorschlag-wert' }, h('strong', {}, anzeige)));
+        if (f && f.art === 'zahl') {
+          const b = bewerteMassEingabe(v.wert, f);
+          const t = { auto: '', bestaetigen: `erkannt: ${massText({ erkannt: true, ...b.mass })}`, umrechnen: `${b.hinweis} Wird nicht umgerechnet – im Feld prüfen.`, fremd: b.hinweis, unerkannt: 'keine Zahl erkannt – wird zur Prüfung markiert' }[b.zustand];
+          if (t) karte.append(h('div', { class: b.zustand === 'bestaetigen' ? 'feld-hinweis' : 'feld-warnung' }, t));
+        }
+      }
+      karte.append(h('button', {
+        class: 'knopf klein', onclick: () => { anwenden(v); erledigt(); aendern(buch); karte.replaceWith(h('p', { class: 'feld-hinweis' }, `✓ ${v.ziel === 'verwerfen' ? 'verworfen' : 'übernommen'}: „${v.quelle ?? v.text}“`)); },
+      }, v.ziel === 'verwerfen' ? 'Verwerfen' : 'Übernehmen'));
+    };
+    zeichne();
+    return karte;
+  };
+
+  box.append(
+    h('summary', {}, h('h2', {}, '🎤 Sammeldiktat')),
+    h('p', { class: 'feld-hinweis' }, 'Mit dem Mikrofon der Tastatur frei diktieren. „Auswerten“ schlägt vor, was in welches Feld gehört; jeder Vorschlag wird erst nach „Übernehmen“ eingetragen.'),
+    ta,
+    h('button', { class: 'knopf breit', onclick: auswerten }, 'Auswerten'),
+    liste,
+  );
+  return box;
+}
+
+// ---------- Notizen zum Kapitel ----------
+function notizBox(buch, kap, aendern) {
+  buch.notizen = buch.notizen || {};
+  return h('details', { class: 'abschnitt notizen', open: !!buch.notizen[kap.id] },
+    h('summary', {}, h('h2', {}, 'Notizen zum Kapitel')),
+    h('p', { class: 'feld-hinweis' }, 'Was sich keinem Feld zuordnen ließ. Erscheint in der Ausgabe als Notiz, nicht als Feld der Vorlage.'),
+    mitwachsen(h('textarea', { rows: 2, oninput: (ev) => { buch.notizen[kap.id] = ev.target.value; aendern(buch); } }, buch.notizen[kap.id] || '')));
+}
+
+return { massFeld, sammeldiktatBox, notizBox };
+})();
+
+// ===== js/protokoll.js =====
+const Modul_protokoll = await (async () => {
+// Erstkontrolle mit dem Protokoll A 5.2 – Inhalt (Prüfpunkte, Optionen) kommt unverändert aus der Gliederung.
+// Je Prüfpunkt: ok oder Schaden (Art des Schadens, Behebung durch, Fotos). Abgelegt im Feld unter C 2.
+//
+// Wert: { art, artWeil, witterung: [], witterungSonst, anlagenarten: [], anlageSonst, protokollfuehrer, datum,
+//         punkte: { 'A.1': { ergebnis: 'ok'|'schaden', schaden, behebung, fotos: [] } }, maengel, wv }
+const { h, leere } = Modul_ui;
+const { fotoFeld } = Modul_fotos;
+const { feldKey, wertVon, sichtbareFelder } = Modul_gliederung;
+function vorschlagAnlagenarten(protokoll, g, buch) {
+  const labels = (g.teilbauwerke || []).filter((t) => (buch.teilbauwerke || []).includes(t.id)).map((t) => t.label.toLowerCase());
+  // Gleiche Bezeichnung; ein Klammerzusatz der Vorlage („… (ohne Absetz- u. Abscheiderfunktion)“) zählt nicht mit.
+  return (protokoll.anlagenarten || []).filter((o) => labels.includes(o.toLowerCase().replace(/\s*\(.*\)\s*$/, '').trim()));
+}
+
+// Anzahl ok / Schaden / offen
+function protokollStand(protokoll, wert) {
+  const r = { ok: 0, schaden: 0, offen: 0 };
+  for (const gr of protokoll.gruppen) {
+    for (const p of gr.punkte) {
+      const e = ((wert || {}).punkte || {})[`${gr.id}.${p.nr}`];
+      if (e && e.ergebnis === 'ok') r.ok++;
+      else if (e && e.ergebnis === 'schaden') r.schaden++;
+      else r.offen++;
+    }
+  }
+  return r;
+}
+
+function protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext, erfasser }) {
+  const pk = g.kapitel.find((k) => k.id === feld.protokoll);
+  const p = pk.protokoll;
+  const box = h('div', { class: 'protokoll' });
+  const w = () => (e.wert && typeof e.wert === 'object' ? e.wert : null);
+  const speichern = (aenderung) => {
+    const neu = { punkte: {}, ...(w() || {}), ...aenderung };
+    setzeWert(neu);
+  };
+
+  const start = () => {
+    leere(box);
+    if (!w()) {
+      box.append(h('p', { class: 'feld-hinweis' }, 'Noch keine Erstkontrolle. Sie ist freiwillig.'),
+        h('button', {
+          class: 'knopf breit',
+          onclick: () => { speichern({ protokollfuehrer: erfasser || '', datum: new Date().toISOString().slice(0, 10) }); start(); },
+        }, `Erstkontrolle beginnen (${p.titel || 'Protokoll'})`));
+      return;
+    }
+    formular();
+  };
+
+  const auswahl = (titel, optionen, wertListe, mehrfach, beiAenderung) => {
+    const fs = h('fieldset', { class: 'gruppe' }, h('legend', {}, titel));
+    const set = new Set(wertListe || []);
+    for (const o of optionen) {
+      fs.append(h('label', { class: 'option' },
+        h('input', {
+          type: mehrfach ? 'checkbox' : 'radio', name: `${feld.id}-${titel}`, checked: set.has(o),
+          onchange: (ev) => {
+            if (!mehrfach) set.clear();
+            if (ev.target.checked) set.add(o); else set.delete(o);
+            beiAenderung(optionen.filter((x) => set.has(x)));
+          },
+        }), h('span', {}, o)));
+    }
+    return fs;
+  };
+  const textfeld = (label, wert, beiAenderung, typ = 'text') => h('label', { class: 'feld klein' }, h('span', { class: 'feld-label' }, label),
+    h('input', { type: typ, value: wert || '', autocomplete: 'off', oninput: (ev) => beiAenderung(ev.target.value) }));
+
+  const formular = () => {
+    const v = w();
+    // Kopf: Werte aus dem Kapitel des Protokolls (A 5.2), nur Anzeige
+    const kopf = h('div', { class: 'protokoll-kopf' });
+    for (const f of sichtbareFelder(pk, buch)) {
+      const x = wertVon(g, buch, pk.id, f);
+      kopf.append(h('div', {}, h('span', { class: 'feld-label' }, `${f.label}: `), x ? String(x) : h('em', {}, '(noch leer – in ' + (pk.nr || pk.id) + ')')));
+    }
+    box.append(kopf);
+
+    box.append(auswahl('Protokoll', p.arten || [], v.art ? [v.art] : [], false, (l) => { speichern({ art: l[0] || null }); formularNeu(); }));
+    if (v.art && /weil\s*$/.test(v.art)) box.append(textfeld('… weil', v.artWeil, (t) => speichern({ artWeil: t })));
+    box.append(auswahl('Angaben zur Witterung', p.witterung || [], v.witterung, true, (l) => { speichern({ witterung: l }); formularNeu(); }));
+    if ((v.witterung || []).some((x) => /^sonstige/i.test(x))) box.append(textfeld('Sonstige Witterung', v.witterungSonst, (t) => speichern({ witterungSonst: t })));
+
+    const vor = vorschlagAnlagenarten(p, g, buch).filter((o) => !(v.anlagenarten || []).includes(o));
+    if (vor.length) {
+      box.append(h('div', { class: 'vorschlag' }, `Vorschlag aus dem Deckblatt: ${vor.join(', ')} `,
+        h('button', { class: 'knopf klein', onclick: () => { speichern({ anlagenarten: p.anlagenarten.filter((o) => (v.anlagenarten || []).includes(o) || vor.includes(o)) }); formularNeu(); } }, 'Übernehmen')));
+    }
+    box.append(auswahl('Art der Anlage (Mehrfachnennung möglich)', p.anlagenarten || [], v.anlagenarten, true, (l) => { speichern({ anlagenarten: l }); formularNeu(); }));
+    if ((v.anlagenarten || []).some((x) => /^sonstiges/i.test(x))) box.append(textfeld('Sonstiges', v.anlageSonst, (t) => speichern({ anlageSonst: t })));
+
+    box.append(textfeld('Name Protokollführer', v.protokollfuehrer, (t) => speichern({ protokollfuehrer: t })));
+    box.append(textfeld('Kontrolldatum', v.datum, (t) => speichern({ datum: t }), 'date'));
+
+    // Prüfpunkte
+    for (const gr of p.gruppen) {
+      const sec = h('div', { class: 'pruef-gruppe' }, h('h3', {}, `${gr.id} ${gr.titel}`));
+      for (const pt of gr.punkte) sec.append(pruefpunkt(gr, pt));
+      box.append(sec);
+    }
+    box.append(textfeld('Mängelbeseitigung veranlasst', v.maengel, (t) => speichern({ maengel: t })));
+    box.append(textfeld('Wv. am', v.wv, (t) => speichern({ wv: t }), 'date'));
+    if (p.fussnote) box.append(h('p', { class: 'feld-hinweis' }, p.fussnote));
+    box.append(h('p', { class: 'feld-hinweis' }, 'Unterschriften (Prüfer, AM-/SM-Leiter) erfolgen auf dem Ausdruck.'));
+  };
+  const formularNeu = () => { const y = window.scrollY; leere(box); formular(); window.scrollTo(0, y); };
+
+  const pruefpunkt = (gr, pt) => {
+    const key = `${gr.id}.${pt.nr}`;
+    const zeile = h('div', { class: 'pruef-punkt' });
+    const zeichne = () => {
+      leere(zeile);
+      const v = w();
+      const e2 = (v.punkte || {})[key] || {};
+      const setze = (aend) => {
+        const punkte = { ...(w().punkte || {}) };
+        const neu = { ...(punkte[key] || {}), ...aend }; // aktueller Stand, nicht der beim Zeichnen
+        // Ohne Ergebnis entfällt der Punkt – außer er hat schon Schadenstext oder Fotos (nichts geht verloren).
+        if (!neu.ergebnis && !neu.schaden && !(neu.fotos || []).length) delete punkte[key]; else punkte[key] = neu;
+        speichern({ punkte });
+        zeichne();
+      };
+      zeile.append(h('div', { class: 'pruef-text' }, h('strong', {}, `${gr.id} ${pt.nr}`), ` ${pt.text}`));
+      zeile.append(h('div', { class: 'optionen zwei' },
+        h('button', { class: `option-knopf ${e2.ergebnis === 'ok' ? 'aktiv' : ''}`, onclick: () => setze({ ergebnis: e2.ergebnis === 'ok' ? null : 'ok' }) }, 'ok'),
+        h('button', { class: `option-knopf ${e2.ergebnis === 'schaden' ? 'aktiv schaden' : ''}`, onclick: () => setze({ ergebnis: e2.ergebnis === 'schaden' ? null : 'schaden' }) }, 'Schaden')));
+      if (e2.ergebnis === 'schaden') {
+        zeile.append(h('label', { class: 'feld klein' }, h('span', { class: 'feld-label' }, 'Art des Schadens'),
+          h('input', { type: 'text', value: e2.schaden || '', autocomplete: 'off', oninput: (ev) => { const punkte = { ...w().punkte }; punkte[key] = { ...punkte[key], schaden: ev.target.value }; speichern({ punkte }); } })));
+        const beh = h('div', { class: 'herkunft' }, h('span', { class: 'feld-label' }, 'Behebung durch: '));
+        for (const b of p.behebung || []) {
+          beh.append(h('button', { class: `chip ${e2.behebung === b ? 'aktiv' : ''}`, onclick: () => setze({ behebung: e2.behebung === b ? null : b }) }, b));
+        }
+        zeile.append(beh);
+        zeile.append(fotoFeld({
+          kontext, feldKey: feldKey(kap.id, feld.id), ids: e2.fotos || [],
+          setzeIds: (ids) => { const punkte = { ...w().punkte }; punkte[key] = { ...punkte[key], fotos: ids }; speichern({ punkte }); },
+        }));
+      }
+    };
+    zeichne();
+    return zeile;
+  };
+
+  start();
+  return box;
+}
+
+return { vorschlagAnlagenarten, protokollStand, protokollFeld };
+})();
+
+// ===== js/app.js =====
+const Modul_app = await (async () => {
+// Beckenbuch-App – Bildschirme und Ablauf.
+const db = Modul_db;
+const G = Modul_gliederung;
+const { h, leere, meldung, bestaetigen, datumDE, mitwachsen, sprungziel } = Modul_ui;
+const { VERSION } = Modul_version;
+const { fotoFeld } = Modul_fotos;
+const { skizzenFeld, bildschirmSkizze, ladeSkizzen } = Modul_skizzen;
+const { eingriffsAbgleich, markenNummern } = Modul_skizzenlogik;
+const { urlsFreigeben } = Modul_bilder;
+const { massFeld, sammeldiktatBox, notizBox } = Modul_diktat;
+const { protokollFeld } = Modul_protokoll;
+const app = document.getElementById('app');
+const zustand = {
+  einstellungen: null, // { id, erfasser, stammdaten: {}, aktiveVorlage }
+  testGliederung: null,
+};
+
+// ---------- Start ----------
+async function start() {
+  db.beiSpeicherFehler((e) => meldung(`Speichern fehlgeschlagen: ${e.message || e}`, 'fehler'));
+  db.beiSpeicherZustand((n) => {
+    const el = document.getElementById('speicheranzeige');
+    if (el) el.textContent = n > 0 ? 'speichert …' : 'gespeichert ✓';
+  });
+  window.addEventListener('beforeunload', (ev) => {
+    if (db.anzahlOffen() > 0) { ev.preventDefault(); ev.returnValue = ''; }
+  });
+
+  zustand.einstellungen = (await db.lese('einstellungen', 'einstellungen')) || {
+    id: 'einstellungen', erfasser: '', stammdaten: {}, aktiveVorlage: null,
+  };
+  // Die Desktop-Testversion (eine einzige HTML-Datei) bringt die Test-Gliederung selbst mit.
+  zustand.testGliederung = window.BECKENBUCH_TESTGLIEDERUNG
+    || await (await fetch('gliederung/test-gliederung.json')).json();
+
+  // Dauerhaften Speicher beantragen (Chrome entscheidet ohne Rückfrage).
+  db.dauerhaftBeantragen().catch(() => {});
+
+  window.addEventListener('hashchange', zeige);
+  zeige();
+  registriereServiceWorker();
+}
+
+// Aktive Gliederung: geladenes Vorlagenpaket oder die eingebaute Test-Gliederung.
+async function aktiveGliederung() {
+  const id = zustand.einstellungen.aktiveVorlage;
+  if (id) {
+    const v = await db.lese('vorlagen', id);
+    if (v) return v.gliederung;
+  }
+  return zustand.testGliederung;
+}
+
+// Gliederung, mit der ein Beckenbuch angelegt wurde.
+async function gliederungFuer(buch) {
+  const id = vorlagenId(buch.vorlage.name, buch.vorlage.version);
+  const v = await db.lese('vorlagen', id);
+  if (v) return { g: v.gliederung, passt: true };
+  const t = zustand.testGliederung;
+  if (t.vorlage === buch.vorlage.name && t.version === buch.vorlage.version) return { g: t, passt: true };
+  return { g: await aktiveGliederung(), passt: false };
+}
+
+function vorlagenId(name, version) {
+  return `${name}@${version}`;
+}
+
+function speichereEinstellungen() {
+  return db.speichere('einstellungen', zustand.einstellungen);
+}
+
+// ---------- Router ----------
+async function zeige() {
+  const teile = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  urlsFreigeben(); // Vorschaubilder des vorigen Bildschirms freigeben
+  try {
+    if (teile.length === 0) await bildschirmListe();
+    else if (teile[0] === 'neu') await bildschirmNeu();
+    else if (teile[0] === 'einstellungen') await bildschirmEinstellungen();
+    else if (teile[0] === 'buch' && teile[2] === 'kapitel') await bildschirmKapitel(teile[1], teile[3]);
+    else if (teile[0] === 'buch' && teile[2] === 'akten') await bildschirmAkten(teile[1]);
+    else if (teile[0] === 'buch' && teile[2] === 'skizze') await bildschirmSkizze({ app, kopf, fuss, ladeBuch, gliederungFuer, aendern }, teile[1], teile[3]);
+    else if (teile[0] === 'buch') await bildschirmBuch(teile[1]);
+    else location.hash = '#/';
+  } catch (e) {
+    console.error(e);
+    leere(app);
+    app.append(kopf('Fehler', '#/'), h('main', {}, h('p', { class: 'fehlertext' }, String(e.message || e))));
+  }
+  window.scrollTo(0, 0);
+  if (sprungziel.key) {
+    const ziel = document.getElementById(`feld-${sprungziel.key}`);
+    sprungziel.key = null;
+    if (ziel) ziel.scrollIntoView({ block: 'start' });
+  }
+}
+
+function kopf(titel, zurueck, zusatz) {
+  return h('header', { class: 'kopf' },
+    zurueck ? h('a', { class: 'zurueck', href: zurueck, 'aria-label': 'Zurück' }, '‹') : h('span', { class: 'zurueck-platz' }),
+    h('h1', {}, titel),
+    h('span', { id: 'speicheranzeige', class: 'speicheranzeige' }, db.anzahlOffen() > 0 ? 'speichert …' : 'gespeichert ✓'),
+    zusatz || null,
+  );
+}
+
+function fuss(...knoepfe) {
+  return h('footer', { class: 'fuss' }, ...knoepfe);
+}
+
+// ---------- Beckenliste ----------
+async function bildschirmListe() {
+  const g = await aktiveGliederung();
+  const buecher = (await db.alle('buecher')).sort((a, b) => (b.geaendert || '').localeCompare(a.geaendert || ''));
+  leere(app);
+  const main = h('main', {});
+  if (g.testdaten) {
+    main.append(h('div', { class: 'hinweis warnung' },
+      h('strong', {}, 'Testvorlage aktiv. '),
+      'Für echte Beckenbücher unter ', h('a', { href: '#/einstellungen' }, 'Einstellungen'), ' das Vorlagenpaket laden.'));
+  }
+  if (buecher.length === 0) {
+    main.append(h('p', { class: 'leer' }, 'Noch kein Beckenbuch angelegt.'));
+  }
+  for (const b of buecher) {
+    main.append(h('a', { class: 'karte', href: `#/buch/${encodeURIComponent(b.id)}` },
+      h('div', { class: 'karte-titel' }, G.buchName(b)),
+      h('div', { class: 'karte-zeile' }, G.buchBauwerksnr(b) ? `Bauwerksnr. ${G.buchBauwerksnr(b)}` : 'Bauwerksnr. fehlt'),
+      h('div', { class: 'karte-zeile' },
+        h('span', { class: `stand stand-${b.stand}` }, G.BUCH_STAND[b.stand] || b.stand),
+        ' · geändert ', datumDE(b.geaendert)),
+      b.vorlage.testdaten ? h('div', { class: 'marke' }, 'Testvorlage') : null,
+      G.brauchtSicherung(b) ? h('div', { class: 'marke warnmarke' }, 'Weder gesichert noch versendet') : null,
+    ));
+  }
+  app.append(
+    kopf('Beckenbücher', null),
+    main,
+    fuss(
+      h('a', { class: 'knopf', href: '#/einstellungen' }, 'Einstellungen'),
+      h('a', { class: 'knopf primaer', href: '#/neu' }, '+ Neues Beckenbuch'),
+    ),
+  );
+}
+
+// ---------- Neues Beckenbuch ----------
+async function bildschirmNeu() {
+  const g = await aktiveGliederung();
+  const angaben = { name: '', bauwerksnr: '', teilbauwerke: [], freieTeilbauwerke: [] };
+  leere(app);
+  const main = h('main', {},
+    g.testdaten ? h('div', { class: 'hinweis warnung' }, 'Es wird mit der Testvorlage angelegt.') : null,
+    h('label', { class: 'feld' }, h('span', { class: 'feld-label' }, 'Name der Anlage'),
+      h('input', { type: 'text', autocomplete: 'off', oninput: (e) => { angaben.name = e.target.value; } })),
+    h('label', { class: 'feld' }, h('span', { class: 'feld-label' }, 'Bauwerksnummer'),
+      h('input', { type: 'text', autocomplete: 'off', oninput: (e) => { angaben.bauwerksnr = e.target.value; } })),
+    teilbauwerkAuswahl(g, angaben, () => {}),
+  );
+  app.append(
+    kopf('Neues Beckenbuch', '#/'),
+    main,
+    fuss(
+      h('a', { class: 'knopf', href: '#/' }, 'Abbrechen'),
+      h('button', {
+        class: 'knopf primaer',
+        onclick: async () => {
+          if (!angaben.name.trim()) { meldung('Bitte einen Namen eingeben.', 'fehler'); return; }
+          await vorlageSicherstellen(g);
+          const buch = G.neuesBeckenbuch(g, zustand.einstellungen.stammdaten, angaben);
+          await db.speichere('buecher', buch);
+          location.hash = `#/buch/${encodeURIComponent(buch.id)}`;
+        },
+      }, 'Anlegen'),
+    ),
+  );
+}
+
+// Die Testvorlage wird beim ersten Anlegen ebenfalls gespeichert, damit das Beckenbuch
+// auch nach einem Update der App seine Gliederung findet.
+async function vorlageSicherstellen(g) {
+  const id = vorlagenId(g.vorlage, g.version);
+  if (!(await db.lese('vorlagen', id))) {
+    await db.speichere('vorlagen', { id, gliederung: g, geladen: new Date().toISOString() });
+  }
+}
+
+function teilbauwerkAuswahl(g, ziel, beiAenderung) {
+  const gewaehlt = new Set(ziel.teilbauwerke);
+  const box = h('fieldset', { class: 'gruppe' }, h('legend', {}, 'Teilbauwerke (Zutreffendes ankreuzen)'));
+  for (const t of g.teilbauwerke || []) {
+    const cb = h('input', {
+      type: 'checkbox', checked: gewaehlt.has(t.id),
+      onchange: (e) => {
+        if (e.target.checked) gewaehlt.add(t.id); else gewaehlt.delete(t.id);
+        ziel.teilbauwerke = (g.teilbauwerke || []).map((x) => x.id).filter((id) => gewaehlt.has(id));
+        beiAenderung('haken');
+      },
+    });
+    box.append(h('label', { class: 'option' }, cb, h('span', {}, t.label)));
+  }
+  const anzahlFrei = g.freieTeilbauwerke || 0;
+  for (let i = 0; i < anzahlFrei; i++) {
+    box.append(h('input', {
+      type: 'text', class: 'frei', placeholder: 'weiteres Teilbauwerk', value: (ziel.freieTeilbauwerke || [])[i] || '',
+      oninput: (e) => { ziel.freieTeilbauwerke = ziel.freieTeilbauwerke || []; ziel.freieTeilbauwerke[i] = e.target.value; beiAenderung('text'); },
+    }));
+  }
+  return box;
+}
+
+// ---------- Beckenbuch: Kapitelübersicht ----------
+async function ladeBuch(id) {
+  const buch = await db.lese('buecher', id);
+  if (!buch) throw new Error('Dieses Beckenbuch gibt es nicht (mehr).');
+  return buch;
+}
+
+function aendern(buch) {
+  buch.geaendert = new Date().toISOString();
+  return db.speichere('buecher', buch);
+}
+
+async function bildschirmBuch(id) {
+  const buch = await ladeBuch(id);
+  const { g, passt } = await gliederungFuer(buch);
+  leere(app);
+  const main = h('main', {});
+  if (!passt) {
+    main.append(h('div', { class: 'hinweis warnung' },
+      `Die Vorlage dieses Beckenbuchs (${buch.vorlage.name}, ${buch.vorlage.version}) ist auf diesem Gerät nicht geladen. Angezeigt wird die aktive Vorlage; Felder können fehlen.`));
+  }
+
+  // Stand
+  const standBox = h('div', { class: 'segment' });
+  for (const s of ['in_arbeit', 'vor_ort_fertig', 'vollstaendig']) {
+    standBox.append(h('button', {
+      class: buch.stand === s ? 'aktiv' : '',
+      onclick: async () => { buch.stand = s; await aendern(buch); zeige(); },
+    }, G.BUCH_STAND[s]));
+  }
+  main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Stand'), standBox,
+    buch.versendet ? h('p', {}, `Versendet am ${datumDE(buch.versendet)}`) : null));
+
+  // Mindestumfang
+  const mu = G.mindestumfang(g, buch);
+  if (mu.length) {
+    const fehlt = mu.filter((m) => !m.erfuellt).length;
+    main.append(h('details', { class: 'abschnitt', open: fehlt > 0 },
+      h('summary', {}, h('h2', {}, `Mindestumfang ARV Nr. 2: ${fehlt === 0 ? 'vollständig' : `${fehlt} fehlen`}`)),
+      h('ul', { class: 'mindest' }, mu.map((m) => h('li', { class: m.erfuellt ? 'ok' : 'fehlt' }, m.erfuellt ? '✓ ' : '✗ ', m.label))),
+    ));
+  }
+
+  // Kapitel
+  const liste = h('div', { class: 'abschnitt' }, h('h2', {}, 'Kapitel'));
+  for (const k of G.sichtbareKapitel(g, buch)) {
+    const f = G.kapitelFortschritt(g, buch, k);
+    const teile = [`${f.geklaert}/${f.gesamt} geklärt`];
+    if (f.offen) teile.push(`${f.offen} offen`);
+    if (f.aus_akten) teile.push(`${f.aus_akten} aus Akten`);
+    if (f.pruefen) teile.push(`${f.pruefen} zur Prüfung`);
+    liste.append(h('a', { class: `kapitel-zeile ${f.geklaert === f.gesamt ? 'fertig' : ''}`, href: `#/buch/${encodeURIComponent(buch.id)}/kapitel/${encodeURIComponent(k.id)}` },
+      h('span', { class: 'kap-nr' }, k.nr || ''),
+      h('span', { class: 'kap-titel' }, k.titel, f.pflichtLeer ? h('span', { class: 'pflicht-marke' }, ` · ${f.pflichtLeer} Pflicht leer`) : null),
+      h('span', { class: 'kap-stand' }, teile.join(' · ')),
+    ));
+  }
+  main.append(liste);
+
+  // Zuschaltbare Abschnitte
+  const zuschaltbar = g.kapitel.filter((k) => k.zuschaltbar && G.istSichtbar(k, buch));
+  if (zuschaltbar.length) {
+    const box = h('div', { class: 'abschnitt' }, h('h2', {}, 'Zusätzliche Abschnitte'));
+    for (const k of zuschaltbar) {
+      const an = (buch.zugeschaltet || []).includes(k.id);
+      box.append(h('label', { class: 'option' },
+        h('input', {
+          type: 'checkbox', checked: an,
+          onchange: async (e) => {
+            const set = new Set(buch.zugeschaltet || []);
+            if (e.target.checked) set.add(k.id); else set.delete(k.id);
+            buch.zugeschaltet = g.kapitel.map((x) => x.id).filter((x) => set.has(x));
+            await aendern(buch);
+            zeige();
+          },
+        }),
+        h('span', {}, `${k.nr} ${k.titel}`, k.quelle ? h('small', {}, ` (aus ${k.quelle})`) : null)));
+    }
+    main.append(box);
+  }
+
+  const akten = G.akteneintraege(g, buch);
+  main.append(h('div', { class: 'abschnitt' },
+    h('a', { class: 'knopf breit', href: `#/buch/${encodeURIComponent(buch.id)}/akten` }, `Aus den Akten nachzutragen (${akten.length})`),
+    h('button', {
+      class: 'knopf gefahr breit',
+      onclick: async () => {
+        const ok = await bestaetigen(`„${G.buchName(buch)}“ endgültig löschen? Das lässt sich nicht rückgängig machen. Ohne Sicherungsdatei sind die Daten verloren.`, 'Endgültig löschen', 'Abbrechen', true);
+        if (!ok) return;
+        await loescheBuchMitBildern(buch.id);
+        meldung('Beckenbuch gelöscht.');
+        location.hash = '#/';
+      },
+    }, 'Beckenbuch löschen'),
+  ));
+
+  app.append(kopf(G.buchName(buch), '#/'), main);
+}
+
+// Beckenbuch samt seinen Fotos und Skizzen löschen.
+async function loescheBuchMitBildern(buchId) {
+  for (const store of ['fotos', 'skizzen']) {
+    for (const r of await db.alle(store)) if (r.buchId === buchId) await db.loesche(store, r.id);
+  }
+  await db.loesche('buecher', buchId);
+}
+
+// Was Foto- und Skizzenfelder vom Beckenbuch brauchen.
+function bildKontext(buch) {
+  return { buch, aendern, standortAn: !!zustand.einstellungen.standortFotos, erfasser: zustand.einstellungen.erfasser || '' };
+}
+
+// ---------- Aus den Akten ----------
+async function bildschirmAkten(id) {
+  const buch = await ladeBuch(id);
+  const { g } = await gliederungFuer(buch);
+  const liste = G.akteneintraege(g, buch);
+  leere(app);
+  const main = h('main', {},
+    h('p', {}, 'Felder mit Status „aus Akten“ und leere Felder, die laut Vorlage aus den Akten kommen.'),
+    liste.length === 0 ? h('p', { class: 'leer' }, 'Nichts nachzutragen.') : null,
+    liste.map((e) => h('a', { class: 'kapitel-zeile', href: `#/buch/${encodeURIComponent(buch.id)}/kapitel/${encodeURIComponent(e.kapitel.id)}` },
+      h('span', { class: 'kap-nr' }, e.kapitel.nr || ''),
+      h('span', { class: 'kap-titel' }, e.feld.label),
+      h('span', { class: 'kap-stand' }, G.STATUS[e.status]))),
+  );
+  app.append(kopf('Aus den Akten', `#/buch/${encodeURIComponent(buch.id)}`), main);
+}
+
+// ---------- Kapitel erfassen ----------
+async function bildschirmKapitel(buchId, kapId) {
+  const buch = await ladeBuch(buchId);
+  const { g } = await gliederungFuer(buch);
+  const kapitelListe = G.sichtbareKapitel(g, buch);
+  const idx = kapitelListe.findIndex((k) => k.id === kapId);
+  if (idx < 0) { location.hash = `#/buch/${encodeURIComponent(buchId)}`; return; }
+  const kap = kapitelListe[idx];
+  const zurUebersicht = `#/buch/${encodeURIComponent(buch.id)}`;
+
+  leere(app);
+  const main = h('main', {});
+  if (kap.hinweis) {
+    main.append(h('details', { class: 'hinweis' }, h('summary', {}, 'Hinweis der Vorlage'), h('p', {}, kap.hinweis)));
+  }
+  for (const t of kap.festtext || []) main.append(h('p', { class: 'festtext' }, t));
+
+  if (kap.id === 'DECK' || (g.testdaten && idx === 0)) {
+    main.append(teilbauwerkAuswahl(g, buch, async (art) => {
+      await aendern(buch);
+      // Ändern sich die Teilbauwerke, können Felder dieses Kapitels ein- oder ausgeblendet werden.
+      if (art === 'haken' && (kap.felder || []).some((f) => f.sichtbarWenn)) {
+        const y = window.scrollY;
+        await bildschirmKapitel(buchId, kapId);
+        window.scrollTo(0, y);
+      }
+    }));
+  }
+
+  const felder = G.sichtbareFelder(kap, buch);
+  const neuZeichnen = async () => { const y = window.scrollY; await bildschirmKapitel(buchId, kapId); window.scrollTo(0, y); };
+  if (felder.some((f) => !f.aus && !['foto', 'skizze', 'pruefprotokoll'].includes(f.art))) {
+    main.append(sammeldiktatBox({ buch, kap, felder, aendern, neuZeichnen }));
+  }
+  for (const feld of felder) main.append(feldBlock(g, buch, kap, feld));
+  main.append(notizBox(buch, kap, aendern));
+
+  const naechstes = kapitelListe[idx + 1];
+  app.append(
+    kopf(`${kap.nr ? kap.nr + ' ' : ''}${kap.titel}`, zurUebersicht),
+    main,
+    fuss(
+      h('a', { class: 'knopf', href: zurUebersicht }, 'Übersicht'),
+      naechstes
+        ? h('a', { class: 'knopf primaer', href: `#/buch/${encodeURIComponent(buch.id)}/kapitel/${encodeURIComponent(naechstes.id)}` }, `Weiter: ${naechstes.nr || naechstes.titel} ›`)
+        : h('a', { class: 'knopf primaer', href: zurUebersicht }, 'Fertig'),
+    ),
+  );
+}
+
+function eintrag(buch, key) {
+  if (!buch.werte[key]) buch.werte[key] = { wert: undefined, status: null, geaendert: null };
+  return buch.werte[key];
+}
+
+function feldBlock(g, buch, kap, feld) {
+  const key = G.feldKey(kap.id, feld.id);
+  const block = h('section', { class: 'feldblock', id: `feld-${key}` });
+  const statusZeile = h('div', { class: 'statuszeile' });
+
+  const marken = [];
+  if (feld.pflicht) marken.push(h('span', { class: 'marke pflicht' }, 'Pflicht'));
+  if (feld.vorschlag) marken.push(h('span', { class: 'marke' }, 'Vorschlag der App'));
+  if (feld.ort === 'akten') marken.push(h('span', { class: 'marke' }, 'Akten'));
+  if (feld.ort === 'stammdaten') marken.push(h('span', { class: 'marke' }, 'aus Stammdaten'));
+
+  block.append(h('div', { class: 'feld-kopf' }, h('span', { class: 'feld-label' }, feld.label, feld.einheit && feld.einheit !== '1:n' ? ` [${feld.einheit}]` : ''), ...marken));
+  if (feld.hinweis) block.append(h('p', { class: 'feld-hinweis' }, feld.hinweis));
+
+  // Feld, das nur einen anderen Wert anzeigt
+  if (feld.aus && (feld.art === 'foto' || feld.art === 'skizze')) {
+    const ids = G.wertVon(g, buch, kap.id, feld) || [];
+    const [qk, qf] = feld.aus.split('.');
+    const quelle = g.kapitel.find((k) => k.id === qk);
+    block.append(feld.art === 'foto'
+      ? fotoFeld({ kontext: bildKontext(buch), feldKey: feld.aus, ids, setzeIds: () => {}, nurAnzeigen: true })
+      : skizzenFeld({ kontext: bildKontext(buch), kap: { id: qk }, feld: { id: qf }, ids, setzeIds: () => {}, nurAnzeigen: true }));
+    block.append(h('p', { class: 'feld-hinweis' }, `Kopie aus ${quelle ? (quelle.nr || quelle.id) : qk} – wird automatisch übernommen; ändern dort.`));
+    return block;
+  }
+  if (feld.aus) {
+    const w = G.wertVon(g, buch, kap.id, feld);
+    block.append(h('p', { class: 'uebernommen' }, w ? String(w) : '(noch leer)', h('small', {}, ' – wird automatisch übernommen')));
+    return block;
+  }
+
+  const e = eintrag(buch, key);
+  const aktualisiereStatus = () => {
+    leere(statusZeile);
+    const st = G.feldStatus(g, buch, kap.id, feld);
+    statusZeile.append(h('span', { class: `status status-${st}` }, G.STATUS[st]));
+    for (const s of G.HAND_STATUS) {
+      statusZeile.append(h('button', {
+        class: `chip ${e.status === s ? 'aktiv' : ''}`,
+        onclick: () => {
+          e.status = e.status === s ? null : s;
+          e.geaendert = new Date().toISOString();
+          aendern(buch);
+          aktualisiereStatus();
+        },
+      }, G.STATUS[s]));
+    }
+  };
+
+  // Bei Eingabe eines Werts wird ein von Hand gesetzter Status aufgehoben.
+  const setzeWert = (wert) => {
+    e.wert = wert;
+    if (!G.istLeer(feld, wert)) e.status = null;
+    e.geaendert = new Date().toISOString();
+    aendern(buch);
+    aktualisiereStatus();
+  };
+
+  block.append(eingabe(g, buch, kap, feld, e, setzeWert));
+  block.append(statusZeile);
+  aktualisiereStatus();
+  return block;
+}
+
+function eingabe(g, buch, kap, feld, e, setzeWert) {
+  switch (feld.art) {
+    case 'text':
+    case 'datum': {
+      const inp = h('input', {
+        type: feld.art === 'datum' ? 'date' : 'text', value: e.wert ?? '', autocomplete: 'off',
+        oninput: (ev) => setzeWert(ev.target.value),
+      });
+      const box = h('div', {}, inp);
+      if (feld.vorschlagAus) {
+        const v = G.vorschlagAusTeilbauwerken(g, buch, feld);
+        if (v && v !== e.wert) {
+          box.append(h('div', { class: 'vorschlag' }, `Vorschlag: ${v} `,
+            h('button', { class: 'knopf klein', onclick: (ev) => { inp.value = v; setzeWert(v); ev.target.parentElement.remove(); } }, 'Übernehmen')));
+        }
+      }
+      return box;
+    }
+    case 'langtext':
+      return mitwachsen(h('textarea', { rows: 3, oninput: (ev) => setzeWert(ev.target.value) }, e.wert ?? ''));
+    case 'zahl':
+      return massFeld(feld, e, setzeWert);
+    case 'pruefprotokoll':
+      return protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext: bildKontext(buch), erfasser: zustand.einstellungen.erfasser });
+    case 'auswahl': {
+      const box = h('div', { class: 'optionen' });
+      const zeichne = () => {
+        leere(box);
+        for (const o of feld.optionen) {
+          box.append(h('button', {
+            class: `option-knopf ${e.wert === o ? 'aktiv' : ''}`,
+            onclick: () => { setzeWert(e.wert === o ? undefined : o); zeichne(); },
+          }, o));
+        }
+      };
+      zeichne();
+      return box;
+    }
+    case 'mehrfach': {
+      const box = h('div', { class: 'optionen' });
+      const zeichne = () => {
+        leere(box);
+        const set = new Set(e.wert || []);
+        for (const o of feld.optionen) {
+          box.append(h('button', {
+            class: `option-knopf ${set.has(o) ? 'aktiv' : ''}`,
+            onclick: () => {
+              if (set.has(o)) set.delete(o); else set.add(o);
+              setzeWert(feld.optionen.filter((x) => set.has(x)));
+              zeichne();
+            },
+          }, set.has(o) ? `☑ ${o}` : `☐ ${o}`));
+        }
+      };
+      zeichne();
+      return box;
+    }
+    case 'janein': {
+      const box = h('div', { class: 'optionen zwei' });
+      const zeichne = () => {
+        leere(box);
+        for (const [w, t] of [[true, 'Ja'], [false, 'Nein']]) {
+          box.append(h('button', {
+            class: `option-knopf ${e.wert === w ? 'aktiv' : ''}`,
+            onclick: () => { setzeWert(e.wert === w ? undefined : w); zeichne(); },
+          }, t));
+        }
+      };
+      zeichne();
+      return box;
+    }
+    case 'tabelle': {
+      const key = G.feldKey(kap.id, feld.id);
+      const box = h('div', {}, tabelle(feld, e, setzeWert, { kontext: bildKontext(buch), key }));
+      markenHinweis(g, buch, key, box);
+      return box;
+    }
+    case 'foto':
+      return fotoFeld({ kontext: bildKontext(buch), feldKey: G.feldKey(kap.id, feld.id), ids: e.wert || [], setzeIds: setzeWert });
+    case 'skizze': {
+      let hinweisMarken = '';
+      if (feld.marken) {
+        const ziel = G.feldIndex(g).get(feld.marken);
+        if (ziel) hinweisMarken = `Nummerierte Marken in der Skizze sind mit der Tabelle „${ziel.feld.label}“ verknüpft.`;
+      }
+      return skizzenFeld({ kontext: bildKontext(buch), kap, feld, ids: e.wert || [], setzeIds: setzeWert, hinweisMarken });
+    }
+    default:
+      return h('p', { class: 'fehlertext' }, `Unbekannte Feldart: ${feld.art}`);
+  }
+}
+
+// Ist die Tabelle mit den Marken einer Skizze verknüpft (Eingriffsstellen), wird angezeigt,
+// welche Nummern nur in der Tabelle oder nur in der Skizze stehen.
+async function markenHinweis(g, buch, tabellenKey, box) {
+  for (const [skKey, ort] of G.feldIndex(g)) {
+    if (ort.feld.marken !== tabellenKey) continue;
+    const skizzen = await ladeSkizzen((buch.werte[skKey] || {}).wert || []);
+    const zeilen = (buch.werte[tabellenKey] || {}).wert || [];
+    const a = eingriffsAbgleich(markenNummern(skizzen), zeilen);
+    const texte = [];
+    if (a.ohneMarke.length) texte.push(`Nr. ${a.ohneMarke.join(', ')} ist in der ${ort.feld.label} nicht markiert.`);
+    if (a.ohneZeile.length) texte.push(`Marke ${a.ohneZeile.join(', ')} der ${ort.feld.label} hat keine Zeile.`);
+    if (texte.length) box.prepend(h('div', { class: 'hinweis warnung' }, texte.join(' ')));
+  }
+}
+
+// bilder: { kontext, key } – nötig, wenn die Tabelle Fotos je Zeile hat (z. B. Unterlagen als Anlage).
+function tabelle(feld, e, setzeWert, bilder = null) {
+  const box = h('div', { class: 'tabelle' });
+  const zeilen = () => (Array.isArray(e.wert) ? e.wert : []);
+  const zeichne = () => {
+    leere(box);
+    zeilen().forEach((z, i) => {
+      const karte = h('div', { class: `zeile-karte ${z._vorschlag ? 'vorschlagszeile' : ''}` }, h('div', { class: 'zeile-nr' }, `Zeile ${i + 1}`,
+        z._vorschlag ? h('span', { class: 'marke' }, 'Beispiel der Vorlage – bestätigen, ändern oder löschen') : null));
+      for (const s of feld.spalten) {
+        karte.append(h('label', { class: 'feld klein' }, h('span', { class: 'feld-label' }, s.label),
+          h('input', {
+            type: 'text', value: z[s.id] ?? '', inputmode: s.art === 'zahl' ? 'decimal' : 'text', autocomplete: 'off',
+            oninput: (ev) => {
+              z[s.id] = ev.target.value;
+              if (z._vorschlag) { delete z._vorschlag; karte.classList.remove('vorschlagszeile'); karte.querySelector('.zeile-nr .marke')?.remove(); karte.querySelector('.bestaetigen')?.remove(); }
+              setzeWert([...zeilen()]);
+            },
+          })));
+      }
+      if (feld.fotosJeZeile && bilder) {
+        karte.append(h('div', { class: 'feld klein' }, h('span', { class: 'feld-label' }, 'Foto der Unterlage (Anlage)'),
+          fotoFeld({
+            kontext: bilder.kontext, feldKey: bilder.key, ids: z.fotos || [],
+            setzeIds: (ids) => { z.fotos = ids; delete z._vorschlag; setzeWert([...zeilen()]); },
+          })));
+      }
+      if (z._vorschlag) {
+        karte.append(h('button', {
+          class: 'knopf klein bestaetigen',
+          onclick: () => { delete z._vorschlag; setzeWert([...zeilen()]); zeichne(); },
+        }, 'Übernehmen'), ' ');
+      }
+      karte.append(h('button', {
+        class: 'knopf klein gefahr',
+        onclick: async () => {
+          if (G.zeileHatInhalt(feld, z) && !(await bestaetigen(`Zeile ${i + 1} löschen?${(z.fotos || []).length ? ' Die Fotos der Zeile werden mitgelöscht.' : ''}`, 'Löschen', 'Abbrechen', true))) return;
+          setzeWert(zeilen().filter((x) => x !== z));
+          for (const fid of z.fotos || []) await db.loesche('fotos', fid);
+          zeichne();
+        },
+      }, 'Zeile löschen'));
+      box.append(karte);
+    });
+    box.append(h('button', {
+      class: 'knopf breit',
+      onclick: () => {
+        const neu = { id: G.neueZeilenId() };
+        if (feld.spalten.some((s) => s.id === 'nr')) neu.nr = String(zeilen().length + 1);
+        setzeWert([...zeilen(), neu]);
+        zeichne();
+        const felder = box.querySelectorAll('.zeile-karte:last-of-type input');
+        if (felder[1] || felder[0]) (felder[1] || felder[0]).focus();
+      },
+    }, '+ Zeile hinzufügen'));
+  };
+  zeichne();
+  return box;
+}
+
+// ---------- Einstellungen ----------
+async function bildschirmEinstellungen() {
+  const g = await aktiveGliederung();
+  const es = zustand.einstellungen;
+  const vorlagen = await db.alle('vorlagen');
+  const speicher = await db.speicherStatus();
+  leere(app);
+  const main = h('main', {});
+
+  // Erfasser und Stammdaten
+  const stamm = h('div', { class: 'abschnitt' }, h('h2', {}, 'Erfasser und Stammdaten'),
+    h('p', { class: 'feld-hinweis' }, 'Werden in jedes neue Beckenbuch übernommen und können dort geändert werden. Sie bleiben nur auf diesem Gerät.'),
+    h('label', { class: 'feld' }, h('span', { class: 'feld-label' }, 'Erfasser'),
+      h('input', { type: 'text', value: es.erfasser || '', oninput: (ev) => { es.erfasser = ev.target.value; speichereEinstellungen(); } })));
+  for (const s of g.stammdaten || []) {
+    if (s.art === 'tabelle') {
+      const e = { wert: es.stammdaten[s.id] || [] };
+      stamm.append(h('div', { class: 'feld' }, h('span', { class: 'feld-label' }, s.label),
+        tabelle(s, e, (w) => { es.stammdaten[s.id] = w; speichereEinstellungen(); })));
+    } else {
+      stamm.append(h('label', { class: 'feld' }, h('span', { class: 'feld-label' }, s.label),
+        h('input', { type: 'text', value: es.stammdaten[s.id] || '', oninput: (ev) => { es.stammdaten[s.id] = ev.target.value; speichereEinstellungen(); } })));
+    }
+  }
+  main.append(stamm);
+
+  // Fotos
+  main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Fotos'),
+    h('label', { class: 'option' },
+      h('input', { type: 'checkbox', checked: !!es.standortFotos, onchange: (ev) => { es.standortFotos = ev.target.checked; speichereEinstellungen(); } }),
+      h('span', {}, 'Standort zu jedem Foto speichern (mit angezeigter Genauigkeit)')),
+    h('p', { class: 'feld-hinweis' }, 'Aus: kein Standort. An: Das Handy fragt einmal nach der Erlaubnis. Den Standort ermittelt Android; je nach Einstellung des Handys nutzt es dafür auch WLAN- und Mobilfunkdaten.')));
+
+  // Vorlage
+  const dateiInput = h('input', {
+    type: 'file', accept: '.json,application/json', class: 'versteckt',
+    onchange: async (ev) => {
+      const datei = ev.target.files[0];
+      if (!datei) return;
+      try {
+        const gl = JSON.parse(await datei.text());
+        const fehler = G.pruefeGliederung(gl);
+        if (fehler.length) { meldung(`Vorlage fehlerhaft: ${fehler.slice(0, 3).join(' ')}`, 'fehler'); return; }
+        const id = vorlagenId(gl.vorlage, gl.version);
+        await db.speichere('vorlagen', { id, gliederung: gl, geladen: new Date().toISOString() });
+        es.aktiveVorlage = id;
+        await speichereEinstellungen();
+        meldung(`Vorlage geladen: ${gl.vorlage} (${gl.version})`);
+        zeige();
+      } catch (e) {
+        meldung(`Datei konnte nicht gelesen werden: ${e.message}`, 'fehler');
+      }
+    },
+  });
+  const vorlageBox = h('div', { class: 'abschnitt' }, h('h2', {}, 'Vorlage'),
+    h('p', {}, 'Aktiv: ', h('strong', {}, g.vorlage), ` (Version ${g.version})`),
+    g.testdaten ? h('div', { class: 'hinweis warnung' }, 'Das ist die eingebaute Testvorlage.') : null,
+    dateiInput,
+    h('button', { class: 'knopf breit', onclick: () => dateiInput.click() }, 'Vorlagenpaket laden …'));
+  const echte = vorlagen.filter((v) => !v.gliederung.testdaten);
+  if (echte.length > 1 || (echte.length && g.testdaten)) {
+    vorlageBox.append(h('p', { class: 'feld-hinweis' }, 'Geladene Vorlagen – für neue Beckenbücher verwenden:'));
+    for (const v of vorlagen) {
+      vorlageBox.append(h('label', { class: 'option' },
+        h('input', { type: 'radio', name: 'vorlage', checked: es.aktiveVorlage === v.id || (!es.aktiveVorlage && v.gliederung.testdaten),
+          onchange: async () => { es.aktiveVorlage = v.gliederung.testdaten ? null : v.id; await speichereEinstellungen(); zeige(); } }),
+        h('span', {}, `${v.gliederung.vorlage} (${v.gliederung.version})`)));
+    }
+  }
+  main.append(vorlageBox);
+
+  // Speicher
+  main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Speicher auf diesem Gerät'),
+    h('p', {}, 'Dauerhafter Speicher: ', h('strong', {}, speicher.dauerhaft === true ? 'gewährt' : speicher.dauerhaft === false ? 'nicht gewährt' : 'unbekannt')),
+    speicher.dauerhaft === false ? h('p', { class: 'feld-hinweis' }, 'Chrome gewährt ihn meist erst, wenn die App auf dem Startbildschirm installiert ist. Bis dahin regelmäßig sichern.') : null,
+    speicher.belegtMB !== null ? h('p', {}, `Belegt: ${speicher.belegtMB} MB von ca. ${speicher.verfuegbarMB} MB`) : null,
+    h('button', { class: 'knopf breit', onclick: async () => { const ok = await db.dauerhaftBeantragen(); meldung(ok ? 'Dauerhafter Speicher gewährt.' : 'Nicht gewährt – App installieren und erneut versuchen.'); zeige(); } }, 'Dauerhaften Speicher beantragen'),
+  ));
+
+  main.append(h('p', { class: 'version' }, `App-Version ${VERSION}`));
+  app.append(kopf('Einstellungen', '#/'), main);
+}
+
+// ---------- Offline-Betrieb ----------
+function registriereServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  if (location.protocol === 'file:') return; // Desktop-Testversion: Datei liegt ohnehin lokal
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    reg.addEventListener('updatefound', () => {
+      const neu = reg.installing;
+      neu && neu.addEventListener('statechange', () => {
+        if (neu.state === 'installed' && navigator.serviceWorker.controller) {
+          const leiste = document.getElementById('update');
+          leiste.hidden = false;
+          leiste.onclick = async () => {
+            await db.allesGespeichert();
+            neu.postMessage('skipWaiting');
+          };
+        }
+      });
+    });
+  }).catch((e) => console.warn('Service Worker nicht registriert', e));
+  let neuGeladen = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (neuGeladen) return;
+    neuGeladen = true;
+    location.reload();
+  });
+}
+
+start();
+
+return {  };
+})();
+
+</script>
+</body>
+</html>
