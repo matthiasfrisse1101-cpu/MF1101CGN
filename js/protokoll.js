@@ -5,6 +5,7 @@
 //         punkte: { 'A.1': { ergebnis: 'ok'|'schaden', schaden, behebung, fotos: [] } }, maengel, wv }
 import { h, leere } from './ui.js';
 import { fotoFeld } from './fotos.js';
+import { datumFeld } from './diktat.js';
 import { feldKey, wertVon, sichtbareFelder, anlagenartVorschlag } from './gliederung.js';
 
 // Vorschlag „Art der Anlage“: aus den Regeln der Gliederung ("anlagenartRegeln"); ältere Gliederungen ohne Regeln
@@ -73,8 +74,10 @@ export function protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext, erfas
     }
     return fs;
   };
-  const textfeld = (label, wert, beiAenderung, typ = 'text') => h('label', { class: 'feld klein' }, h('span', { class: 'feld-label' }, label),
-    h('input', { type: typ, value: wert || '', autocomplete: 'off', oninput: (ev) => beiAenderung(ev.target.value) }));
+  const textfeld = (label, wert, beiAenderung, typ = 'text') => (typ === 'date'
+    ? h('div', { class: 'feld klein' }, h('span', { class: 'feld-label' }, label), datumFeld(wert, beiAenderung))
+    : h('label', { class: 'feld klein' }, h('span', { class: 'feld-label' }, label),
+      h('input', { type: 'text', inputmode: 'text', value: wert || '', autocomplete: 'off', oninput: (ev) => beiAenderung(ev.target.value) })));
 
   const formular = () => {
     const v = w();

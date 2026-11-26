@@ -7,7 +7,7 @@ import { fotoFeld } from './fotos.js';
 import { skizzenFeld, bildschirmSkizze, ladeSkizzen } from './skizzen.js';
 import { eingriffsAbgleich, markenNummern } from './skizzenlogik.js';
 import { urlsFreigeben } from './bilder.js';
-import { massFeld, sammeldiktatBox, notizBox, bildschirmDiktat } from './diktat.js';
+import { massFeld, sammeldiktatBox, notizBox, bildschirmDiktat, datumFeld } from './diktat.js';
 import { protokollFeld } from './protokoll.js';
 import { massskizzeFeld, bildschirmLageplan } from './massskizze_ui.js';
 import { ausgabeAbschnitt, STANDARD_GRENZE_MB } from './ausgabe_ui.js';
@@ -506,10 +506,11 @@ function feldBlock(g, buch, kap, feld, beiAenderung = () => {}, neuZeichnen = ()
 
 function eingabe(g, buch, kap, feld, e, setzeWert) {
   switch (feld.art) {
-    case 'text':
-    case 'datum': {
+    case 'datum':
+      return datumFeld(e.wert, setzeWert);
+    case 'text': {
       const inp = h('input', {
-        type: feld.art === 'datum' ? 'date' : 'text', value: e.wert ?? '', autocomplete: 'off',
+        type: 'text', value: e.wert ?? '', autocomplete: 'off',
         oninput: (ev) => setzeWert(ev.target.value),
       });
       return h('div', {}, inp);
@@ -617,7 +618,7 @@ function tabelle(feld, e, setzeWert, bilder = null) {
       for (const s of feld.spalten) {
         karte.append(h('label', { class: 'feld klein' }, h('span', { class: 'feld-label' }, s.label),
           h('input', {
-            type: 'text', value: z[s.id] ?? '', inputmode: s.art === 'zahl' ? 'decimal' : 'text', autocomplete: 'off',
+            type: 'text', value: z[s.id] ?? '', inputmode: 'text', autocomplete: 'off', // Texttastatur: hat das Mikrofon zum Diktieren
             oninput: (ev) => {
               z[s.id] = ev.target.value;
               if (z._vorschlag) { delete z._vorschlag; karte.classList.remove('vorschlagszeile'); karte.querySelector('.zeile-nr .marke')?.remove(); karte.querySelector('.bestaetigen')?.remove(); }
@@ -702,7 +703,7 @@ async function bildschirmEinstellungen() {
   // Versand
   main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Versand'),
     h('label', { class: 'feld' }, h('span', { class: 'feld-label' }, 'Warnung ab Dateigröße (MB)'),
-      h('input', { type: 'text', inputmode: 'decimal', value: es.mailGrenzeMB ?? '', placeholder: String(STANDARD_GRENZE_MB),
+      h('input', { type: 'text', inputmode: 'text', value: es.mailGrenzeMB ?? '', placeholder: String(STANDARD_GRENZE_MB),
         oninput: (ev) => { const z = parseFloat(ev.target.value.replace(',', '.')); es.mailGrenzeMB = Number.isFinite(z) ? z : null; speichereEinstellungen(); } })),
     h('p', { class: 'feld-hinweis' }, `Größengrenze deines Postfachs. Ohne Eintrag gilt der Vorschlag ${STANDARD_GRENZE_MB} MB.`)));
 

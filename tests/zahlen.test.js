@@ -1,5 +1,5 @@
 import { test, gleich, wahr } from './harness.js';
-import { leseDezimal, zahlDE, zahlwort, leseMass, umrechnen, einheitPasst, massText, normEinheit } from '../js/zahlen.js';
+import { leseDezimal, zahlDE, zahlwort, leseMass, umrechnen, einheitPasst, massText, normEinheit, leseDatum } from '../js/zahlen.js';
 
 test('Zahl: Dezimalkomma', () => gleich(leseDezimal('2,40'), 2.4));
 test('Zahl: Dezimalpunkt', () => gleich(leseDezimal('2.40'), 2.4));
@@ -79,4 +79,19 @@ test('Einheiten: Umrechnung nur auf Wunsch und nur verträglich', () => {
   gleich(einheitPasst('cm', 'm'), 'umrechenbar');
   gleich(einheitPasst('ha', 'm'), 'fremd');
   gleich(normEinheit('Meter'), 'm');
+});
+
+test('Datum aus Diktat: Ziffern, Monatsnamen, heute/gestern, ungültig', () => {
+  const heute = new Date(2026, 10, 28);
+  gleich(leseDatum('12.05.2019', heute), '2019-05-12');
+  gleich(leseDatum('12.5.19', heute), '2019-05-12');
+  gleich(leseDatum('3.11.95', heute), '1995-11-03');
+  gleich(leseDatum('12. Mai 2019', heute), '2019-05-12');
+  gleich(leseDatum('1 März 2020', heute), '2020-03-01');
+  gleich(leseDatum('2019-05-12', heute), '2019-05-12');
+  gleich(leseDatum('heute', heute), '2026-11-28');
+  gleich(leseDatum('Gestern', heute), '2026-11-27');
+  gleich(leseDatum('31.02.2020', heute), null, 'ungültiger Tag');
+  gleich(leseDatum('Mai 2019', heute), null, 'ohne Tag');
+  gleich(leseDatum('irgendwann', heute), null);
 });

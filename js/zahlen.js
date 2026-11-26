@@ -203,3 +203,38 @@ export function massText(m) {
   if (m.art === 'verhaeltnis') return `${zahlDE(m.a)} : ${zahlDE(m.b)}`;
   return `${zahlDE(m.zahl)}${m.einheit ? ` ${m.einheit}` : ''}`;
 }
+
+// ---------- Datum lesen (getippt oder diktiert) ----------
+// „12.05.2019“, „12.5.19“, „12. Mai 2019“, „12 Mai 2019“, „2019-05-12“, „heute“, „gestern“, „vorgestern“ → „2019-05-12“.
+// Nicht Eindeutiges (z. B. nur „Mai 2019“) → null.
+const MONATE = { januar: 1, jänner: 1, jan: 1, februar: 2, feb: 2, märz: 3, maerz: 3, mär: 3, april: 4, apr: 4, mai: 5, juni: 6, jun: 6,
+  juli: 7, jul: 7, august: 8, aug: 8, september: 9, sep: 9, sept: 9, oktober: 10, okt: 10, november: 11, nov: 11, dezember: 12, dez: 12 };
+
+function isoDatum(j, m, t) {
+  const d = new Date(Date.UTC(j, m - 1, t));
+  if (d.getUTCFullYear() !== j || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== t) return null; // z. B. 31.02.
+  return `${j}-${String(m).padStart(2, '0')}-${String(t).padStart(2, '0')}`;
+}
+
+export function leseDatum(text, heute = new Date()) {
+  const t = String(text ?? '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,]$/, '');
+  if (!t) return null;
+  const tage = { heute: 0, gestern: 1, vorgestern: 2 };
+  if (t in tage) {
+    const d = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate() - tage[t]);
+    return isoDatum(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  }
+  const jahr = (y) => {
+    const n = Number(y);
+    if (y.length === 4) return n;
+    if (y.length === 2) { const jj = heute.getFullYear() % 100; return n <= jj ? 2000 + n : 1900 + n; }
+    return null;
+  };
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return isoDatum(Number(m[1]), Number(m[2]), Number(m[3]));
+  m = t.match(/^(\d{1,2})\s?[./]\s?(\d{1,2})\s?[./]\s?(\d{2}|\d{4})$/);
+  if (m) { const j = jahr(m[3]); return j ? isoDatum(j, Number(m[2]), Number(m[1])) : null; }
+  m = t.match(/^(\d{1,2})\.?\s+([a-zäö]+)\.?\s+(\d{2}|\d{4})$/);
+  if (m && MONATE[m[2]]) { const j = jahr(m[3]); return j ? isoDatum(j, MONATE[m[2]], Number(m[1])) : null; }
+  return null;
+}

@@ -40,3 +40,19 @@ test('Manifest: Name, Symbole, Startbildschirm', async () => {
   gleich(m.display, 'standalone');
   wahr(m.icons.some((i) => i.sizes === '192x192') && m.icons.some((i) => i.sizes === '512x512'), 'Symbole 192/512 fehlen');
 });
+
+test('Jedes Eingabefeld ist diktierbar (Texttastatur mit Mikrofon)', async () => {
+  // Zahlen-/Datums-Tastaturen haben kein Mikrofon. Erlaubt ist nur der versteckte Kalender hinter dem 📅-Knopf.
+  const liste = [...sw.matchAll(/^\s+'js\/([^']+\.js)',$/gm)].map((m) => m[1]);
+  wahr(liste.length > 10, 'Modulliste nicht gefunden');
+  const dateien = liste;
+  for (const d of dateien) {
+    const text = await (await fetch(`../js/${d}`, { cache: 'reload' })).text();
+    for (const [muster, name] of [[/inputmode:\s*'(decimal|numeric|tel|email|url)'/g, 'inputmode'], [/type:\s*'(number|tel|email|url|time|datetime-local|month|week)'/g, 'type']]) {
+      const t = [...text.matchAll(muster)];
+      gleich(t.length, 0, `${d}: ${name} ${t.map((m) => m[1]).join(', ')}`);
+    }
+    const datum = [...text.matchAll(/type:\s*'date'[^\n]*/g)].filter((m) => !m[0].includes('kalender-versteckt'));
+    gleich(datum.length, 0, `${d}: Datumsfeld ohne Texteingabe`);
+  }
+});

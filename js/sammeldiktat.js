@@ -2,7 +2,7 @@
 // Ohne KI-Dienst: Zuordnung über Stichwörter und Wörter der Feldnamen. Ich bestätige oder korrigiere jeden Vorschlag;
 // was sich nicht zuordnen lässt, wird als Notiz zum Kapitel vorgeschlagen.
 import { bewerteMassEingabe } from './masse.js';
-import { zahlwort, leseMass } from './zahlen.js';
+import { zahlwort, leseMass, leseDatum } from './zahlen.js';
 
 // Gängige Ausdrücke beim Sprechen → Wörter der Feld- bzw. Prüfpunktnamen (allgemeiner Wortschatz, keine Vorlagentexte).
 export const SYNONYME = {
@@ -107,12 +107,6 @@ function treffer(abschnitt, woerter) {
   return best;
 }
 
-function datumAusText(t) {
-  const m = String(t).match(/^(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{4})$/);
-  if (!m) return null;
-  return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
-}
-
 // Wert für ein Feld aus dem Rest-Text. Liefert { wert, sicher, mass?, hinweis? } oder null.
 export function wertFuerFeld(feld, rest) {
   const roh = rest.trim();
@@ -139,7 +133,7 @@ export function wertFuerFeld(feld, rest) {
       return os.length ? { wert: os, sicher: true } : null;
     }
     case 'datum': {
-      const d = datumAusText(r);
+      const d = leseDatum(roh);
       return d ? { wert: d, sicher: true } : null;
     }
     case 'text':

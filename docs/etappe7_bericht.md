@@ -64,6 +64,16 @@ Auf deinen Wunsch nach einer Diktierfunktion „wie Claude oder Gemini“ – mi
 - Getestet: 144 automatische Tests (neu: Trennung ohne Komma, Beugung/Synonyme, Korrektur, „nein“ als Wert, Ortsangaben nicht zerhackt, Maß mit Folgetext, Erstkontrolle mit Rest ok, Zaun-Synonym). Im Browser mit der echten Gliederung: A 4.2 (Korrektur der Tiefe erkannt) und C 2 (4 Schäden, 24 × ok) – Beispielbuch danach wiederhergestellt.
 - **Grenzen:** Kein echtes Sprachverständnis wie bei einem KI-Dienst – ungewöhnliche Formulierungen landen als Notiz. Wie Gboard gesprochene Zahlen schreibt, ist am Gerät zu prüfen.
 
+## Nachtrag: Jedes Eingabefeld diktierbar (Version 0.8.1)
+Auf deinen Wunsch: Jedes Eingabefeld öffnet die normale Tastatur, die das Mikrofon hat.
+- **Datumsfelder** (z. B. Kontrolldatum, „Wv. am“, Datumsfelder der Kapitel) sind jetzt Textfelder. Sie verstehen „12.05.2019“, „12.5.19“, „12. Mai 2019“, „heute“, „gestern“ und „vorgestern“. Darunter steht das erkannte Datum (✓ 12.05.2019). Wird nichts erkannt, bleibt der Text stehen, und ein Hinweis erscheint. Der **📅-Knopf** daneben öffnet weiterhin den Kalender.
+- **Zahlenspalten in Tabellen** und die Mail-Größengrenze in den Einstellungen nutzen jetzt ebenfalls die Texttastatur.
+- Der Diktier-Bildschirm erkennt Datumsangaben genauso, z. B. „12. Mai 2019“.
+- Auswahlknöpfe (Ja/Nein, Auswahllisten, ok/Schaden) kann man nicht per Tastatur diktieren. Dafür gibt es den Diktier-Bildschirm des Kapitels.
+- Ein **Prüftest** stellt sicher, dass kein Feld mit Zahlen- oder Datumstastatur (ohne Mikrofon) mehr hinzukommt.
+- Getestet: 146 automatische Tests (neu: Datum aus Diktat, Prüftest). Im Browser in Handygröße: „12. Mai 2027“ in „Wv. am“ wird als 12.05.2027 erkannt. Das gespeicherte Kontrolldatum erscheint als 26.11.2026. Der Testwert ist wieder gelöscht.
+- Am Handy zu prüfen: Öffnet der 📅-Knopf den Kalender in Chrome für Android?
+
 ## Stand des Projekts nach Etappe 7
 Alle Etappen des Auftrags v1.3 sind umgesetzt (0–7, dazu 4a sowie Objekt- und Winkelfang). Offen bleibt, was nur am echten Gerät oder bei dir zu klären ist:
 - **Veröffentlichung:** GitHub Pages einschalten (Settings → Pages → main / root), Stände 4a–7 hochladen (GitHub Desktop → „Push origin“).

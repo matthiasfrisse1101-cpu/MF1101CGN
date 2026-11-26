@@ -2,7 +2,7 @@
 // Diktiert wird mit dem Mikrofon der Handy-Tastatur – die App nimmt selbst nichts auf.
 import { h, leere, meldung, mitwachsen } from './ui.js';
 import { bewerteMassEingabe, massAnzeige, HERKUNFT } from './masse.js';
-import { massText } from './zahlen.js';
+import { massText, leseDatum } from './zahlen.js';
 import { werteAus, wertFuerFeld } from './sammeldiktat.js';
 import { feldKey, neueZeilenId } from './gliederung.js';
 
@@ -64,6 +64,39 @@ export function massFeld(feld, e, setzeWert) {
   return h('div', {},
     h('div', { class: 'zahl-zeile' }, inp, feld.einheit && feld.einheit !== '1:n' ? h('span', { class: 'einheit' }, feld.einheit) : null),
     info, herkunft);
+}
+
+// ---------- Datumsfeld: Tastatur mit Mikrofon + Kalenderknopf ----------
+// Gespeichert wird JJJJ-MM-TT; nicht Erkanntes bleibt als Text stehen und wird markiert.
+const alsDE = (iso) => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}.${m[2]}.${m[1]}` : String(iso || ''); };
+export function datumFeld(wert, beiAenderung) {
+  const info = h('div', { class: 'mass-info' });
+  const zeige = (text, iso) => {
+    leere(info);
+    if (!String(text).trim()) return;
+    if (iso) info.append(h('div', { class: 'mass-ok' }, `✓ ${alsDE(iso)}`));
+    else info.append(h('div', { class: 'feld-warnung' }, '⚠ Datum nicht erkannt – z. B. „12.05.2019“, „12. Mai 2019“ oder „heute“. Bleibt als Text stehen.'));
+  };
+  const inp = h('input', {
+    type: 'text', inputmode: 'text', autocomplete: 'off', enterkeyhint: 'done', value: alsDE(wert), placeholder: 'TT.MM.JJJJ oder „heute“',
+    oninput: (ev) => {
+      const t = ev.target.value;
+      const iso = leseDatum(t);
+      beiAenderung(iso || t.trim());
+      zeige(t, iso);
+    },
+  });
+  const kalender = h('input', {
+    type: 'date', class: 'kalender-versteckt', tabindex: -1, 'aria-hidden': 'true',
+    value: /^\d{4}-\d{2}-\d{2}$/.test(String(wert || '')) ? wert : '',
+    onchange: (ev) => { if (!ev.target.value) return; inp.value = alsDE(ev.target.value); beiAenderung(ev.target.value); zeige(inp.value, ev.target.value); },
+  });
+  const knopf = h('button', {
+    class: 'knopf kalender-knopf', type: 'button', 'aria-label': 'Kalender öffnen',
+    onclick: () => { try { kalender.showPicker(); } catch { kalender.focus(); kalender.click(); } },
+  }, '📅');
+  zeige(inp.value, /^\d{4}-\d{2}-\d{2}$/.test(String(wert || '')) ? wert : leseDatum(inp.value));
+  return h('div', {}, h('div', { class: 'zahl-zeile datum-zeile' }, inp, knopf, kalender), info);
 }
 
 // ---------- Sammeldiktat: Vorschläge auswerten und übernehmen ----------

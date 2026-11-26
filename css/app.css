@@ -270,3 +270,8 @@ select.ziel-auswahl {
 .diktier-knopf { font-size: 1.1rem; border-width: 3px; }
 textarea.diktat-feld { min-height: 160px; font-size: 1.1rem; border-color: var(--primaer); border-width: 3px; }
 .vorschlag-karte.ersetzt { opacity: .55; text-decoration: line-through; border-style: dashed; }
+
+/* Datumsfeld */
+.datum-zeile { position: relative; flex-wrap: nowrap; }
+.kalender-knopf { min-width: 56px; padding: 0 10px; font-size: 1.3rem; }
+.kalender-versteckt { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
