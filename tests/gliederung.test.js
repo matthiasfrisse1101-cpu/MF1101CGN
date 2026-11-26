@@ -25,12 +25,12 @@ test('Prüfung: unbekanntes Teilbauwerk in sichtbarWenn', () => {
 });
 
 test('Sichtbarkeit: Kapitel nur bei Teilbauwerk', () => {
-  gleich(G.sichtbareKapitel(testG, leeresBuch()).map((k) => k.id), ['T1', 'T2', 'T5']);
-  gleich(G.sichtbareKapitel(testG, leeresBuch({ teilbauwerke: ['testschacht'] })).map((k) => k.id), ['T1', 'T2', 'T4', 'T5']);
+  gleich(G.sichtbareKapitel(testG, leeresBuch()).map((k) => k.id), ['T1', 'T2', 'T6', 'T5']);
+  gleich(G.sichtbareKapitel(testG, leeresBuch({ teilbauwerke: ['testschacht'] })).map((k) => k.id), ['T1', 'T2', 'T4', 'T6', 'T5']);
 });
 
 test('Sichtbarkeit: zuschaltbares Kapitel', () => {
-  gleich(G.sichtbareKapitel(testG, leeresBuch({ zugeschaltet: ['T3'] })).map((k) => k.id), ['T1', 'T2', 'T3', 'T5']);
+  gleich(G.sichtbareKapitel(testG, leeresBuch({ zugeschaltet: ['T3'] })).map((k) => k.id), ['T1', 'T2', 'T3', 'T6', 'T5']);
 });
 
 test('Sichtbarkeit: Feld nur bei Testwand', () => {

@@ -4,7 +4,7 @@ import { h, leere, meldung, mitwachsen } from './ui.js';
 import { bewerteMassEingabe, massAnzeige, HERKUNFT } from './masse.js';
 import { massText } from './zahlen.js';
 import { werteAus, wertFuerFeld } from './sammeldiktat.js';
-import { feldKey, neueZeilenId } from './gliederung.js';
+import { feldKey, neueZeilenId, OHNE_DIKTAT } from './gliederung.js';
 
 // ---------- Zahlfeld mit Maßerkennung ----------
 // e: Eintrag im Beckenbuch, setzeWert(text): speichert (e.mass wird vorher gesetzt).
@@ -77,7 +77,7 @@ export function sammeldiktatBox({ buch, kap, felder, aendern, neuZeichnen }) {
     oninput: (ev) => { buch.sammeldiktate[kap.id] = ev.target.value; aendern(buch); },
   }, buch.sammeldiktate[kap.id] || ''));
 
-  const bearbeitbar = felder.filter((f) => !f.aus && !['foto', 'skizze', 'pruefprotokoll'].includes(f.art));
+  const bearbeitbar = felder.filter((f) => !f.aus && !OHNE_DIKTAT.includes(f.art));
   const auswerten = () => {
     leere(liste);
     const vs = werteAus(ta.value, bearbeitbar);

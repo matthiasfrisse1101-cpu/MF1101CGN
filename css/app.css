@@ -244,3 +244,15 @@ select.ziel-auswahl {
 .pruef-text { margin-bottom: 6px; }
 .option-knopf.aktiv.schaden { background: var(--gefahr); border-color: var(--gefahr); }
 .notizen textarea { margin-top: 6px; }
+
+/* Skizzen aus Maßen (Etappe 5) */
+.massskizze-bild { border: 2px solid var(--linie); border-radius: 10px; overflow: hidden; background: #fff; margin-bottom: 10px; }
+.massskizze-bild svg { display: block; width: 100%; height: auto; touch-action: manipulation; cursor: crosshair; }
+.massskizze-symbole { flex-direction: row; flex-wrap: wrap; }
+.massskizze-symbole .option-knopf { flex: 1 1 45%; }
+.massskizze details { margin: 10px 0; }
+.massliste { list-style: none; padding: 0; margin: 8px 0; }
+.massliste li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #d7dbe0; }
+.massliste li span { flex: 1 1 60%; }
+.massliste li.fehlt strong { color: var(--gefahr); }
+.massliste a { font-weight: 700; }

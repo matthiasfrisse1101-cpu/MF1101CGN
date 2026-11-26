@@ -2,6 +2,7 @@
 // Ohne KI-Dienst: Zuordnung über Stichwörter und Wörter der Feldnamen. Ich bestätige oder korrigiere jeden Vorschlag;
 // was sich nicht zuordnen lässt, wird als Notiz zum Kapitel vorgeschlagen.
 import { bewerteMassEingabe } from './masse.js';
+import { OHNE_DIKTAT } from './gliederung.js';
 
 const FUELLWOERTER = new Set(['der', 'die', 'das', 'des', 'dem', 'den', 'und', 'oder', 'von', 'vom', 'für', 'mit', 'zur', 'zum', 'nach',
   'sowie', 'bei', 'als', 'aus', 'ggf', 'z.b', 'vorhandene', 'vorhandener', 'angaben', 'angabe', 'optional', 'hinweise', 'test']);
@@ -102,7 +103,7 @@ export function wertFuerFeld(feld, rest) {
 //   { typ: 'zeile', feldId, zeile: {spalte: wert}, quelle }  (eine neue Tabellenzeile je Satz)
 //   { typ: 'notiz', text }
 export function werteAus(text, felder) {
-  const kandidaten = felder.filter((f) => !f.aus && !['foto', 'skizze', 'tabelle', 'pruefprotokoll'].includes(f.art))
+  const kandidaten = felder.filter((f) => !f.aus && !['tabelle', ...OHNE_DIKTAT].includes(f.art))
     .map((f) => ({ f, w: stichwoerter(f) }));
   const tabellen = felder.filter((f) => f.art === 'tabelle' && !f.aus);
   const vorschlaege = [];

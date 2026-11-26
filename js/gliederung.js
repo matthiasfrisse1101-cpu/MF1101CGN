@@ -1,6 +1,7 @@
 // Logik rund um die Gliederung (Vorlage) und den Bearbeitungsstand eines Beckenbuchs.
 // Reine Funktionen ohne Bildschirm und ohne Speicher – deshalb automatisch testbar.
 import { massZustand } from './masse.js';
+import { pruefeMassskizzeFeld } from './massskizze.js';
 
 export const STATUS = {
   erfasst: 'erfasst',
@@ -17,7 +18,10 @@ export const HAND_STATUS = ['nicht_vorhanden', 'nicht_zugaenglich', 'offen', 'au
 // Diese Status gelten als „geklärt“ für den Fortschritt.
 const GEKLAERT = new Set(['erfasst', 'nicht_vorhanden', 'nicht_zugaenglich']);
 
-export const FELDARTEN = ['text', 'langtext', 'zahl', 'datum', 'auswahl', 'mehrfach', 'janein', 'foto', 'skizze', 'tabelle', 'pruefprotokoll'];
+export const FELDARTEN = ['text', 'langtext', 'zahl', 'datum', 'auswahl', 'mehrfach', 'janein', 'foto', 'skizze', 'tabelle', 'pruefprotokoll', 'massskizze'];
+
+// Feldarten, die nicht diktiert werden (kein Sammeldiktat, keine Stichwörter).
+export const OHNE_DIKTAT = ['foto', 'skizze', 'pruefprotokoll', 'massskizze'];
 
 export const BUCH_STAND = {
   in_arbeit: 'in Arbeit',
@@ -85,6 +89,7 @@ export function pruefeGliederung(g) {
         const pk = (g.kapitel || []).find((x) => x.id === f.protokoll);
         if (!pk || !pk.protokoll || !Array.isArray(pk.protokoll.gruppen)) fehler.push(`${wo}: "protokoll" muss auf ein Kapitel mit Protokoll (gruppen) zeigen.`);
       }
+      if (f.art === 'massskizze') fehler.push(...pruefeMassskizzeFeld(f, index, wo));
       if (f.format && !['verhaeltnis', 'dn'].includes(f.format)) fehler.push(`${wo}: unbekanntes "format" "${f.format}".`);
     }
   }
@@ -132,6 +137,8 @@ export function istLeer(feld, wert) {
       return !Array.isArray(wert) || wert.length === 0;
     case 'tabelle':
       return !Array.isArray(wert) || !wert.some((z) => zeileHatInhalt(feld, z));
+    case 'massskizze':
+      return typeof wert !== 'object' || !wert.geprueft;
     case 'pruefprotokoll':
       return typeof wert !== 'object' || (!wert.datum && Object.keys(wert.punkte || {}).length === 0);
     default:

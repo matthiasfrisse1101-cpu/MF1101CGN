@@ -16,7 +16,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - `vorlagen_intern/` ist per `.gitignore` ausgeschlossen: Vorlage (docx), Musterbeckenbuch (doc), ARV Nr. 2, Auftrag.
 - Abgeleitete Gliederung (Entwurf): `vorlagen_intern/docs/etappe0_gliederung.md` (nur lokal, enthält Vorlagentexte).
 - Konzept mit Quellen: `docs/etappe1_konzept.md`.
-- Etappenberichte: `docs/etappe2_bericht.md`, `docs/etappe3_bericht.md`, `docs/etappe4_bericht.md`.
+- Etappenberichte: `docs/etappe2_bericht.md` … `docs/etappe5_bericht.md`.
 - Echte Gliederung: `vorlagen_intern/gliederung_bestandsanlage.json` (nur lokal), Version 2026-11-24.
 
 ## Technik (Kurz)
@@ -32,6 +32,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - Sammeldiktat: `js/sammeldiktat.js` (werteAus, Stichwörter + Feldnamen, Satz→Tabellenzeile, Rest→Notiz); Text in `buch.sammeldiktate[kap]`, Notizen in `buch.notizen[kap]`.
 - Erstkontrolle: Feldart `pruefprotokoll` (C2.erstkontrolle) → `kapitel.protokoll` von A5_2 (Prüfpunkte A1–E4 aus der Vorlage); `js/protokoll.js`.
 - Service Worker: Installation mit `cache: 'reload'`; auf localhost `no-cache`. Beim Testen im Browser alte Module ggf. mit `fetch(url, {cache:'reload'})` auffrischen.
+- Skizzen aus Maßen: Feldart `massskizze` (`ansicht` lageplan/schnitt, `richtung`, `masse` → Zahlfelder); Logik `js/massskizze.js` (holeMasse nur bestätigte Maße, ergaenze = Trapezgeometrie, „≈“ errechnet, „?“ fehlt, SVG), Oberfläche `js/massskizzenfeld.js`; Wert `{symbole, geprueft, stand}`, erfasst erst nach „geprüft“. `aendern()` sendet Ereignis `beckenbuch-geaendert`. `G.OHNE_DIKTAT` listet nicht diktierbare Feldarten.
 - `marken` an einem Skizzenfeld verknüpft Marken mit einer Tabelle (Spalte `nr`); `aus` bei foto/skizze zeigt eine Kopie (A 8).
 
 ## Entscheidungen
@@ -45,6 +46,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 | 20.11.2026 | Optionale Abschnitte A 3, A 4.2, B 2 nach Musterbeckenbuch zuschaltbar | Auftrag v1.3 |
 | 21.11.2026 | Etappe 3: Fotos auf 2000 px verkleinert, Original nicht gespeichert (Vorschlag); Standort standardmäßig aus; Skizzen-Fußzeile „Handskizze, nicht maßstäblich“ (Vorschlag); Etappe 3 vor Veröffentlichung gebaut | Wunsch des Nutzers: erst Etappe 3, Upload später |
 | 24.11.2026 | Etappe 4: Zahlfelder mit Texttastatur (Diktat); Hauptmaße des Beckens in A 4.2 als Vorschlag der App; Erstkontrolle unter C 2 mit unverändertem Protokoll A 5.2; Notizen je Kapitel | Auftrag Funktionen 4–6, Etappe 5 braucht Maße |
+| 26.11.2026 | Etappe 5: Skizzen aus Maßen entstehen automatisch (SVG), nur aus bestätigten Maßen; Ergänzung per Trapezgeometrie mit „≈“; Widersprüche nur melden; Symbolliste, Seitenverhältnis-Begrenzung und Überhöhung als Vorschlag; Hauptmaße A 4.2 weiter unbestätigt, Zuordnung über Gliederung | Nutzer sagte „weiter“ ohne Rückmeldung zu A 4.2; Zuordnung bleibt änderbar ohne Programmierung |
 | 20.11.2026 | Etappe 1 freigegeben: Web-App ohne Build-Schritt; Bibliotheken pdfmake (PDF), easy-template-x (Word), JSZip (Sicherung) lokal; Speicher IndexedDB mit dauerhaftem Speicher; keine Browser-Spracherkennung; Sicherung per Download statt Teilen; Hosting GitHub Pages; Tests mit Node (eingebauter Test-Runner) | s. docs/etappe1_konzept.md |
 
 ## Offene Punkte
@@ -57,12 +59,14 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - Vorschläge aus `vorlagen_intern/docs/etappe0_gliederung.md` (nur lokal, enthält Vorlagentexte) (Unklarheiten 2–5) bestätigen lassen: C 1-Intervall aus Teilbauwerken vorschlagen, beliebig viele Eingriffsstellen, hydraulische Daten als vorgeschlagene Zeilen, Feld „Wasserschutzzone“ als Vorschlag.
 - Beispiel eines fertig ausgefüllten Beckenbuchs (falls vorhanden).
 - Hauptmaße A 4.2 (Vorschlag) bestätigen; Gboard-Schreibweise gesprochener Zahlen am Gerät prüfen.
+- Echte Gliederung: zwei `massskizze`-Felder in A 4.2 eintragen (Vorlage in `docs/etappe5_bericht.md`, Feld-IDs dort Platzhalter). Symbolliste bestätigen; Verschieben von Symbolen bei Bedarf.
 
 ## Stand
 - Etappe 0 abgeschlossen (20.11.2026).
 - Etappe 1 abgeschlossen und freigegeben (20.11.2026).
 - Etappe 2 abgeschlossen (20.11.2026).
 - Etappe 3 abgeschlossen (21.11.2026).
-- Etappe 4 abgeschlossen (24.11.2026), wartet auf „weiter“. Nächster Schritt: Etappe 5 – Lageplan- und Schnittskizzen aus Maßen (Hauptmaße A 4.2 vom Nutzer bestätigen lassen).
+- Etappe 4 abgeschlossen (24.11.2026).
+- Etappe 5 abgeschlossen (26.11.2026), Version 0.5.0, wartet auf „weiter“. Nächster Schritt: Etappe 6 – PDF/Word (Skizzen als Bild einbinden).
 - Veröffentlichung: Stand Etappe 4 liegt in `matthiasfrisse1101-cpu/MF1101CGN` (main). GitHub Pages muss der Nutzer einschalten (Settings → Pages → main, /root) → https://matthiasfrisse1101-cpu.github.io/MF1101CGN/
 - 25.11.2026: Handy-Probelauf (emuliert, Pixel 7): Fehler behoben – ohne Deckblattfeld gingen Name/Bauwerksnr. verloren; jetzt Rückfall `buch.kopf` (Version 0.4.1).

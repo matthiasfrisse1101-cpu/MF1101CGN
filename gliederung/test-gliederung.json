@@ -77,6 +77,25 @@
       ]
     },
     {
+      "id": "T6",
+      "nr": "T 6",
+      "titel": "Testkapitel Maße und Skizzen",
+      "teil": "A",
+      "hinweis": "Testhinweis: Hauptmaße – daraus entstehen Lageplan und Schnitt.",
+      "felder": [
+        { "id": "laenge_oben", "label": "Test-Länge oben", "art": "zahl", "einheit": "m", "ort": "vor_ort", "stichwoerter": ["länge oben"] },
+        { "id": "breite_oben", "label": "Test-Breite oben", "art": "zahl", "einheit": "m", "ort": "vor_ort", "stichwoerter": ["breite oben"] },
+        { "id": "laenge_sohle", "label": "Test-Länge Sohle", "art": "zahl", "einheit": "m", "ort": "vor_ort", "stichwoerter": ["länge sohle"] },
+        { "id": "breite_sohle", "label": "Test-Breite Sohle", "art": "zahl", "einheit": "m", "ort": "vor_ort", "stichwoerter": ["breite sohle"] },
+        { "id": "neigung", "label": "Test-Böschungsneigung", "art": "zahl", "format": "verhaeltnis", "einheit": "1:n", "ort": "vor_ort", "stichwoerter": ["neigung"] },
+        { "id": "tiefe", "label": "Test-Tiefe", "art": "zahl", "einheit": "m", "ort": "vor_ort", "stichwoerter": ["tiefe"] },
+        { "id": "lageplan", "label": "Test-Lageplan aus Maßen", "art": "massskizze", "ansicht": "lageplan", "ort": "vor_ort",
+          "masse": { "laengeOben": "T6.laenge_oben", "breiteOben": "T6.breite_oben", "laengeSohle": "T6.laenge_sohle", "breiteSohle": "T6.breite_sohle", "neigung": "T6.neigung", "tiefe": "T6.tiefe" } },
+        { "id": "schnitt", "label": "Test-Querschnitt aus Maßen", "art": "massskizze", "ansicht": "schnitt", "richtung": "quer", "ort": "vor_ort",
+          "masse": { "breiteOben": "T6.breite_oben", "breiteSohle": "T6.breite_sohle", "neigung": "T6.neigung", "tiefe": "T6.tiefe" } }
+      ]
+    },
+    {
       "id": "T5",
       "nr": "T 5",
       "titel": "Testkapitel Protokoll",

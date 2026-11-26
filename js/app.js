@@ -9,6 +9,7 @@ import { eingriffsAbgleich, markenNummern } from './skizzenlogik.js';
 import { urlsFreigeben } from './bilder.js';
 import { massFeld, sammeldiktatBox, notizBox } from './diktat.js';
 import { protokollFeld } from './protokoll.js';
+import { massskizzenFeld } from './massskizzenfeld.js';
 
 const app = document.getElementById('app');
 const zustand = {
@@ -218,6 +219,8 @@ async function ladeBuch(id) {
 
 function aendern(buch) {
   buch.geaendert = new Date().toISOString();
+  // Signal für Anzeigen, die von anderen Feldern abhängen (z. B. Skizze aus Maßen).
+  document.dispatchEvent(new CustomEvent('beckenbuch-geaendert'));
   return db.speichere('buecher', buch);
 }
 
@@ -369,7 +372,7 @@ async function bildschirmKapitel(buchId, kapId) {
 
   const felder = G.sichtbareFelder(kap, buch);
   const neuZeichnen = async () => { const y = window.scrollY; await bildschirmKapitel(buchId, kapId); window.scrollTo(0, y); };
-  if (felder.some((f) => !f.aus && !['foto', 'skizze', 'pruefprotokoll'].includes(f.art))) {
+  if (felder.some((f) => !f.aus && !G.OHNE_DIKTAT.includes(f.art))) {
     main.append(sammeldiktatBox({ buch, kap, felder, aendern, neuZeichnen }));
   }
   for (const feld of felder) main.append(feldBlock(g, buch, kap, feld));
@@ -479,6 +482,8 @@ function eingabe(g, buch, kap, feld, e, setzeWert) {
       return mitwachsen(h('textarea', { rows: 3, oninput: (ev) => setzeWert(ev.target.value) }, e.wert ?? ''));
     case 'zahl':
       return massFeld(feld, e, setzeWert);
+    case 'massskizze':
+      return massskizzenFeld({ g, buch, feld, e, setzeWert });
     case 'pruefprotokoll':
       return protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext: bildKontext(buch), erfasser: zustand.einstellungen.erfasser });
     case 'auswahl': {
