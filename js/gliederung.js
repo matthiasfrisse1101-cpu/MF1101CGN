@@ -138,6 +138,17 @@ export function pruefeGliederung(g) {
     return false;
   };
   for (const key of index.keys()) if (kreis(key)) fehler.push(`Feld ${key}: Kreisbezug in "sichtbarWenn" (das Feld hängt über andere Felder von sich selbst ab).`);
+  // Zuordnung für die Word-Ausgabe
+  const WORD_OPS = ['entfernenBereich', 'absatzNach', 'eintragen', 'voranstellen', 'block', 'bild', 'ankreuzen', 'ankreuzenListe', 'kreuze', 'tabelle', 'kapitel', 'protokollKopie', 'notizen'];
+  if (g.word !== undefined && !Array.isArray(g.word)) fehler.push('"word" muss eine Liste von Anweisungen sein.');
+  for (const [i, op] of (Array.isArray(g.word) ? g.word : []).entries()) {
+    const wo = `Word-Anweisung ${i + 1} (${op.op})`;
+    if (!WORD_OPS.includes(op.op)) { fehler.push(`${wo}: unbekannte Anweisung.`); continue; }
+    for (const k of ['feld', 'quelle']) if (op[k] && !alleKeys.has(op[k])) fehler.push(`${wo}: Feld "${op[k]}" gibt es nicht.`);
+    if (op.kapitel && !kapIds.has(op.kapitel)) fehler.push(`${wo}: Kapitel "${op.kapitel}" gibt es nicht.`);
+    const texte = JSON.stringify([op.wert, op.werte]);
+    for (const m of texte.matchAll(/\{([A-Za-z0-9_]+\.[A-Za-z0-9_]+)\}/g)) if (!alleKeys.has(m[1])) fehler.push(`${wo}: Platzhalter {${m[1]}} zeigt auf kein Feld.`);
+  }
   for (const m of g.mindestumfang || []) {
     for (const key of m.felder || []) {
       if (!alleKeys.has(key)) fehler.push(`Mindestumfang "${m.label}": Feld ${key} gibt es nicht.`);

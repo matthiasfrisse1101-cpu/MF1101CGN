@@ -10,6 +10,7 @@ import { urlsFreigeben } from './bilder.js';
 import { massFeld, sammeldiktatBox, notizBox } from './diktat.js';
 import { protokollFeld } from './protokoll.js';
 import { massskizzeFeld, bildschirmLageplan } from './massskizze_ui.js';
+import { ausgabeAbschnitt, STANDARD_GRENZE_MB } from './ausgabe_ui.js';
 
 const app = document.getElementById('app');
 const zustand = {
@@ -55,7 +56,21 @@ async function aktiveGliederung() {
 async function gliederungFuer(buch) {
   const id = vorlagenId(buch.vorlage.name, buch.vorlage.version);
   const v = await db.lese('vorlagen', id);
-  if (v) return { g: v.gliederung, passt: true };
+  if (v) {
+    // Word-Vorlage: beim Datensatz selbst oder bei einer anderen Version derselben Vorlage
+    if (!v.docx) {
+      const andere = (await db.alle('vorlagen')).filter((x) => x.gliederung.vorlage === buch.vorlage.name && x.docx);
+      if (andere.length) v.docx = andere.sort((a, b) => String(b.geladen).localeCompare(String(a.geladen)))[0].docx;
+    }
+    // Ältere Gliederungsversion ohne Word-Zuordnung: Zuordnung der neuesten Version derselben Vorlage verwenden
+    let gl = v.gliederung;
+    if (!Array.isArray(gl.word)) {
+      const neuer = (await db.alle('vorlagen')).filter((x) => x.gliederung.vorlage === buch.vorlage.name && Array.isArray(x.gliederung.word))
+        .sort((a, b) => String(b.gliederung.version).localeCompare(String(a.gliederung.version)))[0];
+      if (neuer) gl = { ...gl, word: neuer.gliederung.word };
+    }
+    return { g: gl, passt: true, vorlage: v };
+  }
   const t = zustand.testGliederung;
   if (t.vorlage === buch.vorlage.name && t.version === buch.vorlage.version) return { g: t, passt: true };
   return { g: await aktiveGliederung(), passt: false };
@@ -225,7 +240,7 @@ function aendern(buch) {
 
 async function bildschirmBuch(id) {
   const buch = await ladeBuch(id);
-  const { g, passt } = await gliederungFuer(buch);
+  const { g, passt, vorlage: vorlageDs } = await gliederungFuer(buch);
   leere(app);
   const main = h('main', {});
   if (!passt) {
@@ -291,6 +306,8 @@ async function bildschirmBuch(id) {
     }
     main.append(box);
   }
+
+  main.append(ausgabeAbschnitt({ buch, g, vorlage: vorlageDs, einstellungen: zustand.einstellungen, aendern, neuZeichnen: zeige }));
 
   const akten = G.akteneintraege(g, buch);
   main.append(h('div', { class: 'abschnitt' },
@@ -671,6 +688,13 @@ async function bildschirmEinstellungen() {
   }
   main.append(stamm);
 
+  // Versand
+  main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Versand'),
+    h('label', { class: 'feld' }, h('span', { class: 'feld-label' }, 'Warnung ab Dateigröße (MB)'),
+      h('input', { type: 'text', inputmode: 'decimal', value: es.mailGrenzeMB ?? '', placeholder: String(STANDARD_GRENZE_MB),
+        oninput: (ev) => { const z = parseFloat(ev.target.value.replace(',', '.')); es.mailGrenzeMB = Number.isFinite(z) ? z : null; speichereEinstellungen(); } })),
+    h('p', { class: 'feld-hinweis' }, `Größengrenze deines Postfachs. Ohne Eintrag gilt der Vorschlag ${STANDARD_GRENZE_MB} MB.`)));
+
   // Fotos
   main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Fotos'),
     h('label', { class: 'option' },
@@ -680,10 +704,24 @@ async function bildschirmEinstellungen() {
 
   // Vorlage
   const dateiInput = h('input', {
-    type: 'file', accept: '.json,application/json', class: 'versteckt',
+    type: 'file', accept: '.json,application/json,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document', multiple: true, class: 'versteckt',
     onchange: async (ev) => {
-      const datei = ev.target.files[0];
-      if (!datei) return;
+      const dateien = [...ev.target.files].sort((a, b) => (a.name.endsWith('.json') ? -1 : 1) - (b.name.endsWith('.json') ? -1 : 1));
+      ev.target.value = '';
+      for (const datei of dateien) await vorlageDateiLaden(datei);
+      zeige();
+    },
+  });
+  const vorlageDateiLaden = async (datei) => {
+      if (/\.docx$/i.test(datei.name)) {
+        // Word-Vorlage gehört zur aktiven (echten) Vorlage
+        const v = es.aktiveVorlage ? await db.lese('vorlagen', es.aktiveVorlage) : null;
+        if (!v || v.gliederung.testdaten) { meldung('Bitte zuerst die Gliederung (JSON) laden, dann die Word-Vorlage.', 'fehler'); return; }
+        v.docx = datei; v.docxName = datei.name; v.docxGeladen = new Date().toISOString();
+        await db.speichere('vorlagen', v);
+        meldung(`Word-Vorlage geladen: ${datei.name}`);
+        return;
+      }
       try {
         const gl = JSON.parse(await datei.text());
         const fehler = G.pruefeGliederung(gl);
@@ -692,18 +730,24 @@ async function bildschirmEinstellungen() {
         await db.speichere('vorlagen', { id, gliederung: gl, geladen: new Date().toISOString() });
         es.aktiveVorlage = id;
         await speichereEinstellungen();
+        // Word-Vorlage einer früheren Version übernehmen
+        const neu = await db.lese('vorlagen', id);
+        if (!neu.docx) {
+          const alt = (await db.alle('vorlagen')).find((x) => x.gliederung.vorlage === gl.vorlage && x.docx);
+          if (alt) { neu.docx = alt.docx; neu.docxName = alt.docxName; await db.speichere('vorlagen', neu); }
+        }
         meldung(`Vorlage geladen: ${gl.vorlage} (${gl.version})`);
-        zeige();
       } catch (e) {
         meldung(`Datei konnte nicht gelesen werden: ${e.message}`, 'fehler');
       }
-    },
-  });
+  };
   const vorlageBox = h('div', { class: 'abschnitt' }, h('h2', {}, 'Vorlage'),
     h('p', {}, 'Aktiv: ', h('strong', {}, g.vorlage), ` (Version ${g.version})`),
     g.testdaten ? h('div', { class: 'hinweis warnung' }, 'Das ist die eingebaute Testvorlage.') : null,
     dateiInput,
-    h('button', { class: 'knopf breit', onclick: () => dateiInput.click() }, 'Vorlagenpaket laden …'));
+    h('button', { class: 'knopf breit', onclick: () => dateiInput.click() }, 'Vorlagenpaket laden … (Gliederung .json und Word-Vorlage .docx)'));
+  const aktiv = vorlagen.find((v) => v.id === es.aktiveVorlage);
+  vorlageBox.append(h('p', { class: 'feld-hinweis' }, aktiv && aktiv.docx ? `Word-Vorlage: ${aktiv.docxName || 'geladen'}` : 'Word-Vorlage: noch nicht geladen'));
   const echte = vorlagen.filter((v) => !v.gliederung.testdaten);
   if (echte.length > 1 || (echte.length && g.testdaten)) {
     vorlageBox.append(h('p', { class: 'feld-hinweis' }, 'Geladene Vorlagen – für neue Beckenbücher verwenden:'));

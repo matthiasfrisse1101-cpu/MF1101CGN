@@ -323,9 +323,9 @@ export function lageplanSvg(masse, wert = {}, info = {}) {
   if (m.boeschung) s += text(cx, cy + 10, `Böschung ${massText(m.boeschung, '1:n')}`, { groesse: 22, farbe: m.boeschung.fehlt ? FARBE.fehlt : FARBE.mass });
   // Schnittlinien A–A (quer) und B–B (längs)
   if (wert.schnitte !== false) {
-    const ex = 34;
-    s += linie(cx, cy - h / 2 - ex, cx, cy + h / 2 + ex, { farbe: FARBE.rot, dicke: 2, art: 'berechnet' });
-    s += text(cx + 18, cy - h / 2 - ex + 6, 'A', { groesse: 26, farbe: FARBE.rot, gewicht: 700 }) + text(cx + 18, cy + h / 2 + ex + 18, 'A', { groesse: 26, farbe: FARBE.rot, gewicht: 700 });
+    const ex = 34, exUnten = 100; // unten bis unter die Maßkette der Sohle, damit „A“ nicht überlappt
+    s += linie(cx, cy - h / 2 - ex, cx, cy + h / 2 + exUnten, { farbe: FARBE.rot, dicke: 2, art: 'berechnet' });
+    s += text(cx + 18, cy - h / 2 - ex + 6, 'A', { groesse: 26, farbe: FARBE.rot, gewicht: 700 }) + text(cx + 18, cy + h / 2 + exUnten + 4, 'A', { groesse: 26, farbe: FARBE.rot, gewicht: 700 });
     s += linie(cx - w / 2 - ex, cy + 40, cx + w / 2 + ex, cy + 40, { farbe: FARBE.rot, dicke: 2, art: 'berechnet' });
     s += text(cx - w / 2 - ex - 20, cy + 48, 'B', { groesse: 26, farbe: FARBE.rot, gewicht: 700 }) + text(cx + w / 2 + ex + 20, cy + 48, 'B', { groesse: 26, farbe: FARBE.rot, gewicht: 700 });
   }

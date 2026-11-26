@@ -258,3 +258,6 @@ select.ziel-auswahl {
 .lageplan-flaeche svg { display: block; width: 100%; height: auto; }
 .symbol-raster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px; }
 .symbol-raster .wz { font-size: .85rem; }
+
+/* Ausgabe (Etappe 6) */
+.dateiname { overflow-wrap: anywhere; }

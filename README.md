@@ -2,7 +2,7 @@
 
 Web-App fürs Handy (Android/Chrome), mit der bestehende Entwässerungsanlagen an Straßen vor Ort aufgenommen werden. Ergebnis ist ein Beckenbuch nach der Vorlage der Dienststelle. Läuft offline, speichert alles auf dem Gerät, ohne Konto und ohne fremde Dienste.
 
-**Stand:** Etappe 5 (Fotos, Skizzen, Maße mit Diktat, Sammeldiktat, Erstkontrolle, Bauform mit Vorschlägen, Lageplan- und Schnittskizzen aus Maßen). PDF, Word und Sicherung folgen. Skizzen aus Maßen, PDF, Word und Sicherung folgen.
+**Stand:** Etappe 6 (Erfassung mit Fotos, Skizzen, Maßen, Diktat, Erstkontrolle, Bauform, Lageplan- und Schnittskizzen; Ausgabe als PDF und Word, Versand über den Teilen-Dialog). Sicherung folgt. Skizzen aus Maßen, PDF, Word und Sicherung folgen.
 
 ## Ordner
 | Ordner/Datei | Inhalt |
@@ -15,6 +15,8 @@ Web-App fürs Handy (Android/Chrome), mit der bestehende Entwässerungsanlagen a
 | `js/skizzen.js`, `js/skizzenlogik.js` | Zeichnen, Marken für Eingriffsstellen, Abgleich mit der Tabelle |
 | `js/zahlen.js`, `js/masse.js`, `js/sammeldiktat.js`, `js/diktat.js` | Zahlen/Maße erkennen, Sammeldiktat zuordnen, Oberfläche dazu |
 | `js/protokoll.js` | Erstkontrolle mit dem Protokoll A 5.2 |
+| `js/ausgabe.js`, `js/pdf.js`, `js/word.js`, `js/bildquelle.js`, `js/ausgabe_ui.js` | PDF und Word erzeugen, Versand |
+| `lib/` | pdfmake (PDF) und JSZip (Word), MIT-Lizenz, lokal eingebunden |
 | `js/massskizze.js`, `js/massskizze_ui.js` | Lageplan, Quer- und Längsschnitt aus den Maßen (SVG), Maßstab und Raster, Lageplan-Editor |
 | `gliederung/test-gliederung.json` | **Test**-Gliederung mit erfundenen Feldern |
 | `sw.js`, `manifest.webmanifest`, `icons/` | Offline-Betrieb und Installation |
@@ -47,6 +49,7 @@ Eine **Bedingung** hat dieselbe Schreibweise in `sichtbarWenn`, in Vorschlagsreg
 - **Teilbauwerke:** `hilfe` (Text für „Woran erkenne ich das?“).
 - **Felder:** `gruppe` (Zwischenüberschrift über zusammengehörigen Feldern), `ausgabe: false` (erscheint nicht im fertigen Beckenbuch, bleibt in der Sicherung).
 - **Skizze aus Maßen:** Feldart `massskizze` mit `masse` (z. B. `"laengeOben": "A4_2.laenge_ok"`; erlaubt: laengeOben, breiteOben, laengeSohle, breiteSohle, boeschung, tiefe, dauerstau, schlammraum – jeweils Zahlfelder) und optional `funktionsskizze` (Skizzenfeld, für das der Lageplan Grundlage werden kann).
+- **Word-Ausgabe:** `word` ist eine Liste von Anweisungen, die die Original-Vorlage (docx) ausfüllen. Jede Anweisung findet ihre Stelle über den Text der Vorlage, z. B. `{ "op": "eintragen", "zeile": "Straßen-Nr.:", "wert": "{A1.strasse_nr}" }`. Werte als Vorlage mit `{KAPITEL.feld}`; eine Liste von Zeilen lässt Zeilen ohne Wert weg. Anweisungen: entfernenBereich, absatzNach, eintragen (zeile/zelleMit/absatzMit, kursive Beispiele werden ersetzt), voranstellen, block, bild, ankreuzen, ankreuzenListe, kreuze, tabelle, kapitel, protokollKopie, notizen – Beschreibung oben in `js/word.js`. Felder mit `ausgabe: false` erscheinen weder in Word noch im PDF.
 - Die Prüfung meldet unbekannte Felder, Werte außerhalb der Optionen, `true`/`false` bei Nicht-Ja/Nein-Feldern, Selbst- und Kreisbezüge.
 
 ## Neue Version veröffentlichen

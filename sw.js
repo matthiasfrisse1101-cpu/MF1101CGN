@@ -1,6 +1,6 @@
 // Service Worker: speichert die App-Dateien, damit die App ohne Netz startet.
 // Bei jeder Veröffentlichung VERSION erhöhen (gleich wie in js/version.js).
-const VERSION = '0.5.2';
+const VERSION = '0.6.0';
 const CACHE = `beckenbuch-${VERSION}`;
 const DATEIEN = [
   './',
@@ -22,6 +22,14 @@ const DATEIEN = [
   'js/protokoll.js',
   'js/massskizze.js',
   'js/massskizze_ui.js',
+  'js/ausgabe.js',
+  'js/ausgabe_ui.js',
+  'js/bildquelle.js',
+  'js/pdf.js',
+  'js/word.js',
+  'lib/pdfmake.min.js',
+  'lib/vfs_fonts.js',
+  'lib/jszip.min.js',
   'js/version.js',
   'gliederung/test-gliederung.json',
   'icons/icon-192.png',

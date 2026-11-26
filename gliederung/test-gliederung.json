@@ -135,5 +135,6 @@
           "masse": { "laengeOben": "T6.t_l", "breiteOben": "T6.t_b", "laengeSohle": "T6.t_ls", "breiteSohle": "T6.t_bs", "boeschung": "T6.t_n", "tiefe": "T6.t_t" } }
       ]
     }
-  ]
+  ],
+  "word": [{"op": "entfernenBereich", "von": "Testhinweisseite Anfang", "bis": "Testhinweisseite Ende"}, {"op": "absatzNach", "nach": "für", "wert": "{T1.pflichttext}"}, {"op": "eintragen", "zeile": "Test-Länge:", "wert": "{T1.laenge}"}, {"op": "eintragen", "zeile": "Test-Auswahl:", "wert": "{T1.auswahl}"}, {"op": "ankreuzen", "zeile": "Test-Ja/Nein:", "feld": "T1.janein", "ja": "ja", "nein": "nein"}, {"op": "block", "nach": "Testblock:", "wert": "{T1.langtext}"}, {"op": "tabelle", "kopf": "Nr.", "feld": "T2.tabelle", "spalten": ["nr", "text"]}, {"op": "bild", "nach": "Testfoto:", "feld": "T2.foto"}, {"op": "kreuze", "kopf": "Teilbauwerke"}, {"op": "kapitel", "kapitel": "T3", "vor": "Testende", "stilWie": "T 1 Testüberschrift", "labelWie": "Testblock:"}]
 }
