@@ -16,8 +16,8 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - `vorlagen_intern/` ist per `.gitignore` ausgeschlossen: Vorlage (docx), Musterbeckenbuch (doc), ARV Nr. 2, Auftrag.
 - Abgeleitete Gliederung (Entwurf): `vorlagen_intern/docs/etappe0_gliederung.md` (nur lokal, enthält Vorlagentexte).
 - Konzept mit Quellen: `docs/etappe1_konzept.md`.
-- Etappenberichte: `docs/etappe2_bericht.md`, `docs/etappe3_bericht.md`, `docs/etappe4_bericht.md`, `docs/etappe4a_bericht.md`.
-- Echte Gliederung: `vorlagen_intern/gliederung_bestandsanlage.json` (nur lokal), Version 2026-11-26.
+- Etappenberichte: `docs/etappe2_bericht.md`, `docs/etappe3_bericht.md`, `docs/etappe4_bericht.md`, `docs/etappe4a_bericht.md`, `docs/etappe5_bericht.md`.
+- Echte Gliederung: `vorlagen_intern/gliederung_bestandsanlage.json` (nur lokal), Version 2026-11-27.
 - Beispiel-Beckenbuch (erfundene, realistische Angaben): `vorlagen_intern/beispiel.html` + `beispiel_beckenbuch.js` (nur lokal), Aufruf `http://localhost:8123/vorlagen_intern/beispiel.html`.
 
 ## Technik (Kurz)
@@ -33,6 +33,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - Erstkontrolle: Feldart `pruefprotokoll` (C2.erstkontrolle) → `kapitel.protokoll` von A5_2 (Prüfpunkte A1–E4 aus der Vorlage); `js/protokoll.js`.
 - Service Worker: Installation mit `cache: 'reload'`; auf localhost `no-cache`. Beim Testen im Browser alte Module ggf. mit `fetch(url, {cache:'reload'})` auffrischen.
 - Bedingungen (Etappe 4a): `G.bedingungErfuellt(bed, buch, g)` mit teilbauwerk/felder/alle/eines/nicht; `istSichtbar`/`sichtbareFelder` brauchen `g` für Feldbedingungen. Vorschläge: `G.vorschlagFuerFeld` (vorschlagRegeln → vorschlagBausteine → vorschlagAus), Anzeige generisch in `feldBlock`; Kapitel baut sich neu auf, wenn ein Feld aus `G.abhaengigkeitsfelder(g)` geändert wird. Protokoll: `anlagenartRegeln` → `G.anlagenartVorschlag`. Fachliche Regeln und Texte stehen nur in der Gliederungsdatei, nicht im Code.
+- Skizzen aus Maßen (Etappe 5): Feldart `massskizze` (A4_2.lageplan) mit `masse` {laengeOben, breiteOben, laengeSohle, breiteSohle, boeschung, tiefe, dauerstau, schlammraum} → Feldkeys und `funktionsskizze`. Logik/SVG `js/massskizze.js` (Maßstab automatisch aus MASSSTAEBE, Raster = runde Meter mit min. 80 px, `ergaenze` berechnet nur eindeutig Ableitbares, fehlend = grau + „?“), Oberfläche/Editor `js/massskizze_ui.js`, Route `#/buch/ID/lageplan/KAP.FELD`. Feldwert `{ massstab: 'auto'|Zahl, elemente: [symbol{art,x,y,winkel,text}|zaun{punkte}] in Metern ab Beckenmitte, nord: {winkel, quelle}, schnitte }`. Freie Skizzen: `skizze.massstab` → Meterraster und Maßstabsleiste.
 - `marken` an einem Skizzenfeld verknüpft Marken mit einer Tabelle (Spalte `nr`); `aus` bei foto/skizze zeigt eine Kopie (A 8).
 
 ## Entscheidungen
@@ -47,6 +48,7 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 | 21.11.2026 | Etappe 3: Fotos auf 2000 px verkleinert, Original nicht gespeichert (Vorschlag); Standort standardmäßig aus; Skizzen-Fußzeile „Handskizze, nicht maßstäblich“ (Vorschlag); Etappe 3 vor Veröffentlichung gebaut | Wunsch des Nutzers: erst Etappe 3, Upload später |
 | 24.11.2026 | Etappe 4: Zahlfelder mit Texttastatur (Diktat); Hauptmaße des Beckens in A 4.2 als Vorschlag der App; Erstkontrolle unter C 2 mit unverändertem Protokoll A 5.2; Notizen je Kapitel | Auftrag Funktionen 4–6, Etappe 5 braucht Maße |
 | 26.11.2026 | Etappe 4a: Bauform-Merkmale in A 1 (Vorschlag der App, `ausgabe: false`), Sichtbarkeit nach Antworten, Hilfe zu Teilbauwerken, Ableitungen für Art des Bauwerks, Ölrückhaltung und Art der Anlage (A 5.2) als Regeln in der Gliederung; nie automatisch eintragen; freie Teilbauwerke hinten an die Fließfolge | Ergänzungsauftrag 4a des Nutzers |
+| 27.11.2026 | Etappe 5: Lageplan, Quer- und Längsschnitt als SVG aus den Hauptmaßen; Maßstab automatisch passend, Raster in runden Metern, Rasterfang; freie Skizzen optional im Raster mit Maßstab; Dauerstau-/Schlammraumhöhe als Vorschlag in A 4.2; Lageplan als Grundlage der Funktionsskizze | Auftrag Funktion 7, Hinweis des Nutzers: im Raster skizzieren, sinnvoller Maßstab |
 | 20.11.2026 | Etappe 1 freigegeben: Web-App ohne Build-Schritt; Bibliotheken pdfmake (PDF), easy-template-x (Word), JSZip (Sicherung) lokal; Speicher IndexedDB mit dauerhaftem Speicher; keine Browser-Spracherkennung; Sicherung per Download statt Teilen; Hosting GitHub Pages; Tests mit Node (eingebauter Test-Runner) | s. docs/etappe1_konzept.md |
 
 ## Offene Punkte
@@ -66,5 +68,6 @@ Vollständiger Auftrag: `vorlagen_intern/Prompt_Beckenbuch-App_v1.3.md` (nicht i
 - Etappe 2 abgeschlossen (20.11.2026).
 - Etappe 3 abgeschlossen (21.11.2026).
 - Etappe 4 abgeschlossen (24.11.2026).
-- Zwischenetappe 4a (Beckenarten und Bauformen) abgeschlossen (26.11.2026), wartet auf „weiter“. Nächster Schritt: Etappe 5 – Lageplan- und Schnittskizzen aus Maßen (Hauptmaße A 4.2 vom Nutzer bestätigen lassen).
-- Veröffentlichung: Stand Etappe 4 liegt im Repository `matthiasfrisse1101-cpu/MF1101CGN` (hochgeladen mit GitHub Desktop durch den Nutzer). GitHub Pages noch nicht eingeschaltet (Settings → Pages → main / root). Getestet wird vorerst am Mac über `http://localhost:8123` (Server im Terminal-Tab).
+- Zwischenetappe 4a (Beckenarten und Bauformen) abgeschlossen (26.11.2026).
+- Etappe 5 abgeschlossen (27.11.2026), wartet auf „weiter“. Nächster Schritt: Etappe 6 – Word, PDF und Versand (Felder mit `ausgabe: false` weglassen, SVG-Skizzen einbetten).
+- Veröffentlichung: Stand Etappe 4 liegt im Repository (4a und 5 noch nicht gepusht) `matthiasfrisse1101-cpu/MF1101CGN` (hochgeladen mit GitHub Desktop durch den Nutzer). GitHub Pages noch nicht eingeschaltet (Settings → Pages → main / root). Getestet wird vorerst am Mac über `http://localhost:8123` (Server im Terminal-Tab).

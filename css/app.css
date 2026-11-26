@@ -250,3 +250,11 @@ select.ziel-auswahl {
 .tb-hilfe summary { color: var(--primaer); font-weight: 600; min-height: 40px; display: flex; align-items: center; }
 .tb-hilfe p { margin: 4px 0 8px; background: var(--flaeche); padding: 8px 10px; border-radius: 8px; }
 .zwischenueberschrift { font-size: 1.05rem; margin: 24px 0 0; padding: 8px 10px; background: var(--flaeche); border-left: 6px solid var(--primaer); border-radius: 6px; }
+
+/* Skizzen aus Maßen (Etappe 5) */
+.massskizze-karte { margin: 10px 0 14px; }
+.massskizze-bild { display: block; width: 100%; height: auto; border: 2px solid #c5cad0; border-radius: 8px; background: #fff; }
+.lageplan-flaeche { width: 100%; touch-action: none; border: 2px solid var(--linie); border-radius: 8px; overflow: hidden; background: #fff; }
+.lageplan-flaeche svg { display: block; width: 100%; height: auto; }
+.symbol-raster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px; }
+.symbol-raster .wz { font-size: .85rem; }

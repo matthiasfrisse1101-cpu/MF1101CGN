@@ -6,6 +6,7 @@ import * as S from './skizzenlogik.js';
 import { h, leere, meldung, bestaetigen, sprungziel } from './ui.js';
 import { verkleinere, ladeBild, canvasZuBlob, bildUrl } from './bilder.js';
 import { feldIndex, feldKey, neueZeilenId } from './gliederung.js';
+import { MASSSTAEBE, rasterWaehlen, massstabsleiste, pxProM } from './massskizze.js';
 
 export function neueSkizzenId() {
   return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -23,19 +24,37 @@ export async function ladeSkizzen(ids) {
 // Fertige Grafik (mit Fußleiste) erzeugen und in der Skizze ablegen.
 export async function bildErzeugen(skizze, hintergrund) {
   if (skizze.grundlage && !hintergrund) hintergrund = await ladeBild(skizze.grundlage.blob);
+  const mitLeiste = skizze.massstab && !skizze.ausLageplan;
+  const fuss = mitLeiste ? 100 : S.FUSS_HOEHE;
   const c = document.createElement('canvas');
   c.width = skizze.breite;
-  c.height = skizze.hoehe + S.FUSS_HOEHE;
+  c.height = skizze.hoehe + fuss;
   const ctx = c.getContext('2d');
   S.zeichne(ctx, skizze, hintergrund, {});
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, skizze.hoehe, skizze.breite, S.FUSS_HOEHE);
-  ctx.fillStyle = '#333333';
-  ctx.font = '26px system-ui, sans-serif';
+  ctx.fillRect(0, skizze.hoehe, skizze.breite, fuss);
+  const datum = new Date(skizze.angelegt).toLocaleDateString('de-DE');
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
-  const datum = new Date(skizze.angelegt).toLocaleDateString('de-DE');
-  ctx.fillText(S.fussText(skizze, skizze.erfasser, datum), 16, skizze.hoehe + S.FUSS_HOEHE / 2);
+  let xText = 16;
+  if (mitLeiste) {
+    // Maßstabsleiste (4 Abschnitte zu runden Metern)
+    const l = massstabsleiste(skizze.massstab);
+    const p = pxProM(skizze.massstab) * (skizze.breite / S.LEER_BREITE);
+    const y = skizze.hoehe + 40;
+    ctx.font = '20px system-ui, sans-serif';
+    for (let i = 0; i < l.abschnitte; i++) {
+      ctx.fillStyle = i % 2 ? '#fff' : '#111';
+      ctx.fillRect(20 + i * l.abschnittM * p, y, l.abschnittM * p, 12);
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.strokeRect(20 + i * l.abschnittM * p, y, l.abschnittM * p, 12);
+      ctx.fillStyle = '#111'; ctx.fillText(String(i * l.abschnittM), 14 + i * l.abschnittM * p, y + 32);
+    }
+    ctx.fillText(`${l.abschnitte * l.abschnittM} m`, 14 + l.abschnitte * l.abschnittM * p, y + 32);
+    xText = 20 + l.abschnitte * l.abschnittM * p + 80;
+  }
+  ctx.fillStyle = '#333333';
+  ctx.font = '24px system-ui, sans-serif';
+  ctx.fillText(S.fussText(skizze, skizze.erfasser, datum), xText, skizze.hoehe + fuss / 2);
   skizze.bild = await canvasZuBlob(c, skizze.grundlage ? 'image/jpeg' : 'image/png', 0.88);
   skizze.bildStand = skizze.geaendert;
   return skizze.bild;
@@ -283,6 +302,19 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
       h('button', { class: 'wz', disabled: rueck.length === 0, onclick: () => { vor.push(JSON.stringify(skizze.elemente)); skizze.elemente = JSON.parse(rueck.pop()); auswahl = -1; geaendert(); } }, '↶ Rückgängig'),
       h('button', { class: 'wz', disabled: vor.length === 0, onclick: () => { rueck.push(JSON.stringify(skizze.elemente)); skizze.elemente = JSON.parse(vor.pop()); auswahl = -1; geaendert(); } }, '↷ Wiederholen')),
     h('p', { class: 'feld-hinweis' }, hilfe));
+    // Maßstab und Raster (nur auf leerer Fläche): das Raster zeigt dann runde Meter, die Skizze bekommt eine Maßstabsleiste.
+    if (!skizze.grundlage) {
+      werkzeug.append(h('select', {
+        class: 'ziel-auswahl',
+        onchange: (ev) => { skizze.massstab = ev.target.value ? Number(ev.target.value) : null; geaendert(); },
+      },
+      h('option', { value: '', selected: !skizze.massstab }, 'Raster ohne Maßstab'),
+      MASSSTAEBE.map((ms) => h('option', { value: ms, selected: skizze.massstab === ms }, `Im Raster skizzieren: M 1:${ms} (1 Kästchen = ${String(rasterWaehlen(ms)).replace('.', ',')} m)`))));
+      const flaecheText = (ms) => { const p = pxProM(ms); return `${Math.round(skizze.breite / p)} × ${Math.round(skizze.hoehe / p)} m`; };
+      werkzeug.append(h('p', { class: 'feld-hinweis' }, skizze.massstab
+        ? `Die Fläche entspricht bei M 1:${skizze.massstab} etwa ${flaecheText(skizze.massstab)}. Passt die Anlage nicht oder ist sie sehr klein, einen anderen Maßstab wählen.`
+        : `Sinnvollen Maßstab wählen, damit die Anlage gut auf die Fläche passt – z. B. M 1:250 (Fläche etwa ${flaecheText(250)}) oder M 1:500 (etwa ${flaecheText(500)}).`));
+    }
   };
 
   // ----- Liste der Eingriffsstellen (verknüpft mit der Tabelle) -----

@@ -7,6 +7,8 @@
 //   angelegt, geaendert, bild: Blob (fertig gezeichnet, für Vorschau und Ausgabe) }
 // Koordinaten sind Pixel der Skizze (breite × hoehe), unabhängig von der Bildschirmgröße.
 
+import { pxProM, rasterWaehlen } from './massskizze.js';
+
 export const LEER_BREITE = 1600;
 export const LEER_HOEHE = 1200;
 export const FARBEN = { schwarz: '#111111', rot: '#c4001d', blau: '#0047b3' };
@@ -132,12 +134,13 @@ export function zeichne(ctx, skizze, hintergrund, { raster = false, auswahl = -1
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, breite, hoehe);
   if (hintergrund) ctx.drawImage(hintergrund, 0, 0, breite, hoehe);
-  if (raster && !hintergrund) {
-    // Nur Zeichenhilfe im Editor, erscheint nicht in der fertigen Skizze.
+  // Raster: ohne Maßstab nur Zeichenhilfe im Editor; mit Maßstab ein Meterraster, das auch in der fertigen Skizze steht.
+  if ((raster || skizze.massstab) && !hintergrund) {
+    const schritt = rasterSchrittPx(skizze);
     ctx.strokeStyle = '#e3e8ee';
     ctx.lineWidth = 2;
-    for (let x = 100; x < breite; x += 100) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, hoehe); ctx.stroke(); }
-    for (let y = 100; y < hoehe; y += 100) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(breite, y); ctx.stroke(); }
+    for (let x = schritt; x < breite; x += schritt) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, hoehe); ctx.stroke(); }
+    for (let y = schritt; y < hoehe; y += schritt) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(breite, y); ctx.stroke(); }
   }
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -184,8 +187,16 @@ export function zeichne(ctx, skizze, hintergrund, { raster = false, auswahl = -1
 }
 
 // Fußleiste der fertigen Grafik: Kennzeichnung als Handskizze mit Datum und Erfasser.
+// Rasterweite in Pixeln: mit Maßstab runde Meter (z. B. 1 Kästchen = 5 m), sonst 100 px.
+export function rasterSchrittPx(skizze) {
+  if (!skizze.massstab) return 100;
+  return rasterWaehlen(skizze.massstab) * pxProM(skizze.massstab) * (skizze.breite / LEER_BREITE);
+}
+
 export function fussText(skizze, erfasser, datumText) {
-  const teile = ['Handskizze, nicht maßstäblich'];
+  const teile = [skizze.ausLageplan ? 'Funktionsskizze auf Grundlage der Lageplanskizze'
+    : skizze.massstab ? `Handskizze im Raster M 1:${skizze.massstab} (1 Kästchen = ${String(rasterWaehlen(skizze.massstab)).replace('.', ',')} m), nicht maßstäblich verbindlich`
+      : 'Handskizze, nicht maßstäblich'];
   if (datumText) teile.push(datumText);
   if (erfasser) teile.push(`Erfasser: ${erfasser}`);
   return teile.join(' · ');

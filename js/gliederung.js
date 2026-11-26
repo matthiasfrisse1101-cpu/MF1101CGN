@@ -17,7 +17,7 @@ export const HAND_STATUS = ['nicht_vorhanden', 'nicht_zugaenglich', 'offen', 'au
 // Diese Status gelten als „geklärt“ für den Fortschritt.
 const GEKLAERT = new Set(['erfasst', 'nicht_vorhanden', 'nicht_zugaenglich']);
 
-export const FELDARTEN = ['text', 'langtext', 'zahl', 'datum', 'auswahl', 'mehrfach', 'janein', 'foto', 'skizze', 'tabelle', 'pruefprotokoll'];
+export const FELDARTEN = ['text', 'langtext', 'zahl', 'datum', 'auswahl', 'mehrfach', 'janein', 'foto', 'skizze', 'tabelle', 'pruefprotokoll', 'massskizze'];
 
 export const BUCH_STAND = {
   in_arbeit: 'in Arbeit',
@@ -85,6 +85,17 @@ export function pruefeGliederung(g) {
       if (f.art === 'pruefprotokoll') {
         const pk = (g.kapitel || []).find((x) => x.id === f.protokoll);
         if (!pk || !pk.protokoll || !Array.isArray(pk.protokoll.gruppen)) fehler.push(`${wo}: "protokoll" muss auf ein Kapitel mit Protokoll (gruppen) zeigen.`);
+      }
+      if (f.art === 'massskizze') {
+        const erlaubt = ['laengeOben', 'breiteOben', 'laengeSohle', 'breiteSohle', 'boeschung', 'tiefe', 'dauerstau', 'schlammraum'];
+        if (!f.masse || typeof f.masse !== 'object') fehler.push(`${wo}: Maßskizze ohne "masse" (Zuordnung der Hauptmaße).`);
+        for (const [mk, ref] of Object.entries(f.masse || {})) {
+          if (!erlaubt.includes(mk)) fehler.push(`${wo}: unbekanntes Maß "${mk}" (erlaubt: ${erlaubt.join(', ')}).`);
+          const z = index.get(ref);
+          if (!z) fehler.push(`${wo}: Maß "${mk}" zeigt auf kein Feld (${ref}).`);
+          else if (z.art !== 'zahl') fehler.push(`${wo}: Maß "${mk}" muss auf ein Zahlfeld zeigen (${ref}).`);
+        }
+        if (f.funktionsskizze && (!index.get(f.funktionsskizze) || index.get(f.funktionsskizze).art !== 'skizze')) fehler.push(`${wo}: "funktionsskizze" muss auf ein Skizzenfeld zeigen.`);
       }
       if (f.format && !['verhaeltnis', 'dn'].includes(f.format)) fehler.push(`${wo}: unbekanntes "format" "${f.format}".`);
       // Bedingungen in Sichtbarkeit und Vorschlagsregeln

@@ -9,6 +9,7 @@ import { eingriffsAbgleich, markenNummern } from './skizzenlogik.js';
 import { urlsFreigeben } from './bilder.js';
 import { massFeld, sammeldiktatBox, notizBox } from './diktat.js';
 import { protokollFeld } from './protokoll.js';
+import { massskizzeFeld, bildschirmLageplan } from './massskizze_ui.js';
 
 const app = document.getElementById('app');
 const zustand = {
@@ -79,6 +80,7 @@ async function zeige() {
     else if (teile[0] === 'buch' && teile[2] === 'kapitel') await bildschirmKapitel(teile[1], teile[3]);
     else if (teile[0] === 'buch' && teile[2] === 'akten') await bildschirmAkten(teile[1]);
     else if (teile[0] === 'buch' && teile[2] === 'skizze') await bildschirmSkizze({ app, kopf, fuss, ladeBuch, gliederungFuer, aendern }, teile[1], teile[3]);
+    else if (teile[0] === 'buch' && teile[2] === 'lageplan') await bildschirmLageplan({ app, kopf, fuss, ladeBuch, gliederungFuer, aendern, erfasser: zustand.einstellungen.erfasser || '' }, teile[1], teile[3]);
     else if (teile[0] === 'buch') await bildschirmBuch(teile[1]);
     else location.hash = '#/';
   } catch (e) {
@@ -496,6 +498,8 @@ function eingabe(g, buch, kap, feld, e, setzeWert) {
       return mitwachsen(h('textarea', { rows: 3, oninput: (ev) => setzeWert(ev.target.value) }, e.wert ?? ''));
     case 'zahl':
       return massFeld(feld, e, setzeWert);
+    case 'massskizze':
+      return massskizzeFeld({ g, buch, kap, feld, e, setzeWert, erfasser: zustand.einstellungen.erfasser || '', aendern });
     case 'pruefprotokoll':
       return protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext: bildKontext(buch), erfasser: zustand.einstellungen.erfasser });
     case 'auswahl': {
