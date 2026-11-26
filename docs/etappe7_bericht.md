@@ -43,6 +43,15 @@
 9. App-Symbol testweise löschen und neu installieren, dann die Sicherung einlesen – sind die Daten wieder da?
 10. Wie oft willst du sichern? (Die App erinnert über den Hinweis in der Liste.)
 
+## Nachtrag: Fotos und Mängel im Bericht verknüpft (Version 0.7.1)
+Auf deinen Hinweis: Im Bericht war nicht zu erkennen, welches Foto zu welchem Mangel gehört.
+- **Schadenszeile nennt ihre Fotos:** In der Erstkontrolle steht beim Schaden „… (Foto 3, 4)“, in PDF und Word.
+- **Bildunterschrift nennt den Bezug:** „Foto 3 – zu B 1 Wasserstand (ausr. ü. UK Tauchwand): Ölfilm an der Tauchwand – eigene Unterschrift (Datum)“. Die Schadensfotos stehen in der Reihenfolge der Prüfpunkte unter „Fotos zu den Schäden“.
+- **Fotos aus Tabellenzeilen** (B 1/B 4-Unterlagen, B 2-Typenschilder) nennen Abschnitt und Zeile, z. B. „zu B 2 Bauteile – Absperrschieber Zulauf“.
+- **Fotoverzeichnis** im PDF mit neuer Spalte **„Bezug“** (Kapitel und Feld, Prüfpunkt oder Tabellenzeile).
+- Damit der Bezug entsteht, das Foto **direkt beim Schaden** aufnehmen (Erstkontrolle → Prüfpunkt → „Schaden“ → 📷).
+- Getestet: 136 automatische Tests (neu: Fotonummer am Schaden und Bezug unter dem Foto in PDF und Word mit der echten Vorlage) sowie ein Durchlauf mit echtem Foto am Prüfpunkt D 2 im Beispielbuch.
+
 ## Stand des Projekts nach Etappe 7
 Alle Etappen des Auftrags v1.3 sind umgesetzt (0–7, dazu 4a sowie Objekt- und Winkelfang). Offen bleibt, was nur am echten Gerät oder bei dir zu klären ist:
 - **Veröffentlichung:** GitHub Pages einschalten (Settings → Pages → main / root), Stände 4a–7 hochladen (GitHub Desktop → „Push origin“).

@@ -43,7 +43,10 @@ async function pngBlob() {
 const fakeBilder = async () => {
   const b = await pngBlob();
   const bytes = new Uint8Array(await b.arrayBuffer());
-  return async () => [{ bytes, blob: b, ext: 'png', breite: 4, hoehe: 3, unterschrift: 'Foto 1: Testbild' }];
+  return async (key) => (key.startsWith('protokoll:')
+    // Schadensfoto mit Bezug zum Prüfpunkt (wie bildquelle.js)
+    ? [{ bytes, blob: b, ext: 'png', breite: 4, hoehe: 3, punkt: 'A.2', foto: { id: 'f-7', nr: 7, bezug: 'A 2' }, unterschrift: 'Foto 7 – zu A 2 Testpunkt: Testschaden (28.11.2026)' }]
+    : [{ bytes, blob: b, ext: 'png', breite: 4, hoehe: 3, unterschrift: 'Foto 1: Testbild' }]);
 };
 async function lesen(blob) {
   const zip = await window.JSZip.loadAsync(blob);
@@ -64,6 +67,7 @@ function testBuch() {
   setze('T2.foto', ['f-x']);
   b.zugeschaltet = ['T3'];
   setze('T3.notiz', 'Testnotiz im Zusatzkapitel');
+  setze('T5.kontrolle', { datum: '2026-11-28', punkte: { 'A.1': { ergebnis: 'ok' }, 'A.2': { ergebnis: 'schaden', schaden: 'Testschaden', fotos: ['f-7'] } } });
   return b;
 }
 
@@ -135,6 +139,15 @@ test('PDF: Gliederung, Verzeichnisse, Seitenzahlen; Datei entsteht', async () =>
   wahr(blob.size > 2000, `PDF zu klein (${blob.size})`);
 });
 
+test('Fotobezug: Schaden nennt seine Fotos, Foto nennt seinen Prüfpunkt (PDF)', async () => {
+  const d = await pdfBeschreibung(testG, testBuch(), await fakeBilder(), {});
+  const t = JSON.stringify(d.content);
+  wahr(t.includes('Testschaden (Foto 7)'), 'Schadenszeile ohne Fotonummer');
+  wahr(t.includes('Foto 7 – zu A 2 Testpunkt: Testschaden'), 'Bildunterschrift ohne Bezug');
+  wahr(t.includes('Fotos zu den Schäden'), 'Überschrift der Schadensfotos fehlt');
+  wahr(t.includes('"Bezug"'), 'Spalte „Bezug“ im Fotoverzeichnis fehlt');
+});
+
 test('Offene Punkte: Pflicht leer, Status offen, Maß zur Prüfung', () => {
   const b = testBuch();
   b.werte['T1.pflichttext'] = { wert: '' };
@@ -155,7 +168,7 @@ if (echt && echtDocx) {
     s('A1.strasse_nr', 'B 0000'); s('A1.oelrueckhaltung', true); s('A1.art_bauwerk', 'Absetzbecken, Regenrückhaltebecken');
     s('A4_1.eingriffsstellen', [{ id: 'e1', nr: '1', stelle: 'Testschieber', wirkung: 'Testwirkung' }]);
     s('A8.sofortmassnahmen', 'Testsofortmaßnahme');
-    s('C2.erstkontrolle', { punkte: { 'A.1': { ergebnis: 'ok' }, 'A.2': { ergebnis: 'schaden', schaden: 'Testschaden', behebung: 'AM/ SM' } }, datum: '2026-11-28', art: 'Sicht- und Funktionskontrolle', anlagenarten: ['Absetzbecken'] });
+    s('C2.erstkontrolle', { punkte: { 'A.1': { ergebnis: 'ok' }, 'A.2': { ergebnis: 'schaden', schaden: 'Testschaden', behebung: 'AM/ SM', fotos: ['f-7'] } }, datum: '2026-11-28', art: 'Sicht- und Funktionskontrolle', anlagenarten: ['Absetzbecken'] });
     b.zugeschaltet = ['A4_2'];
     s('A4_2.wirkungsweise', 'Testwirkungsweise');
     b.notizen = { A1: 'Testnotiz A1' };
@@ -168,7 +181,7 @@ if (echt && echtDocx) {
     const { doc, xml } = await lesen(blob);
     wahr(kursivFrei(doc), `${kursivRuns(doc)} kursive Runs übrig`);
     const t = absaetze(doc).join('\n');
-    for (const x of ['Testbecken Word', 'B 0000', '☒ ja', 'Testschieber', 'Testsofortmaßnahme', 'nicht erfasst', 'Teststraßenmeisterei', 'Erstkontrolle bei der Bestandsaufnahme am 28.11.2026', 'Testschaden', 'A 4.2 Anlagenteile und Funktion', 'Testwirkungsweise', 'Notiz: Testnotiz A1']) wahr(t.includes(x), `„${x}“ fehlt`);
+    for (const x of ['Testbecken Word', 'B 0000', '☒ ja', 'Testschieber', 'Testsofortmaßnahme', 'nicht erfasst', 'Teststraßenmeisterei', 'Erstkontrolle bei der Bestandsaufnahme am 28.11.2026', 'Testschaden (Foto 7)', 'Foto 7 – zu A 2 Testpunkt: Testschaden', 'Fotos zu den Schäden der Erstkontrolle:', 'A 4.2 Anlagenteile und Funktion', 'Testwirkungsweise', 'Notiz: Testnotiz A1']) wahr(t.includes(x), `„${x}“ fehlt`);
     wahr(!/\[[A-Z0-9_]+\.[a-z0-9_]+\?\]/.test(xml), 'unaufgelöster Platzhalter');
     wahr(!t.includes('Diese Seite dient nur der Erstellung'), 'Hinweisseite nicht entfernt');
   });

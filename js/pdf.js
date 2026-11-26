@@ -20,7 +20,7 @@ export async function pdfBeschreibung(g, buch, bilder, { erfasser = '', stand = 
       if (b.svgText) r.push({ svg: b.svgText, width: BREITE, margin: [0, 4, 0, 8] });
       else r.push({ image: await blobZuDataUrl(b.blob), fit: [breite, 560], margin: [0, 4, 0, 2] });
       if (b.unterschrift) r.push({ text: b.unterschrift, fontSize: 9, color: '#333', margin: [0, 0, 0, 8] });
-      if (b.foto) fotoListe.push({ ...b.foto, unterschrift: b.unterschrift });
+      if (b.foto) fotoListe.push({ ...b.foto, text: b.foto.unterschrift });
     }
     return r;
   };
@@ -94,7 +94,7 @@ export async function pdfBeschreibung(g, buch, bilder, { erfasser = '', stand = 
         const b = await bildKnoten(f.aus || key, f.art === 'foto' ? 380 : BREITE);
         inhalt.push(...(b.length ? b : [{ ...wertKnoten(feldAusgabe(g, buch, k.id, f), true), margin: [0, 0, 0, 6] }]));
       } else if (f.art === 'pruefprotokoll') {
-        inhalt.push(...await protokollKnoten(g, buch, k, f, bildKnoten));
+        inhalt.push(...await protokollKnoten(g, buch, k, f, bildKnoten, bilder));
       }
     }
     einfachAusgeben();
@@ -107,7 +107,7 @@ export async function pdfBeschreibung(g, buch, bilder, { erfasser = '', stand = 
   // ---------- Verzeichnisse ----------
   inhalt.push({ text: 'Fotoverzeichnis', style: 'h1', pageBreak: 'before', tocItem: true });
   inhalt.push(fotoListe.length
-    ? { table: { headerRows: 1, widths: [40, '*', 70], body: [[{ text: 'Nr.', bold: true }, { text: 'Bildunterschrift', bold: true }, { text: 'Datum', bold: true }], ...fotoListe.sort((a, b) => a.nr - b.nr).map((f) => [String(f.nr), f.unterschrift || '', datumDE(String(f.datum).slice(0, 10))])] }, layout: 'lightHorizontalLines' }
+    ? { table: { headerRows: 1, widths: [30, '*', 170, 58], body: [[{ text: 'Nr.', bold: true }, { text: 'Bildunterschrift', bold: true }, { text: 'Bezug', bold: true }, { text: 'Datum', bold: true }], ...fotoListe.filter((f, i, a) => a.findIndex((x) => x.nr === f.nr) === i).sort((a, b) => a.nr - b.nr).map((f) => [String(f.nr), f.text || '–', { text: f.bezug || '', fontSize: 8 }, datumDE(String(f.datum).slice(0, 10))])] }, fontSize: 9, layout: 'lightHorizontalLines' }
     : { text: 'Keine Fotos.', italics: true, color: GRAU });
   const offen = offenePunkte(g, buch);
   inhalt.push({ text: 'Offene Punkte', style: 'h1', margin: [0, 18, 0, 6], tocItem: true });
@@ -138,13 +138,16 @@ export async function pdfBeschreibung(g, buch, bilder, { erfasser = '', stand = 
   };
 }
 
-function protokollTabelle(p, w, titel) {
+// fotoNr: Map Prüfpunkt („B.1“) → Fotonummern, damit der Schaden auf seine Fotos verweist.
+function protokollTabelle(p, w, titel, fotoNr = new Map()) {
   const body = [[{ text: 'Nr.', bold: true }, { text: 'Kontrollgegenstand', bold: true }, { text: 'ok', bold: true }, { text: 'Art des Schadens', bold: true }, { text: 'Behebung durch', bold: true }]];
   for (const gr of p.gruppen) {
     body.push([{ text: gr.id, bold: true }, { text: gr.titel, bold: true, colSpan: 4 }, '', '', '']);
     for (const pt of gr.punkte) {
       const e = (w && w.punkte && w.punkte[`${gr.id}.${pt.nr}`]) || {};
-      body.push([`${gr.id} ${pt.nr}`, pt.text, e.ergebnis === 'ok' ? 'ok' : '', e.ergebnis === 'schaden' ? (e.schaden || 'Schaden') : '', e.behebung || '']);
+      const nrn = fotoNr.get(`${gr.id}.${pt.nr}`) || [];
+      const schaden = e.ergebnis === 'schaden' ? `${e.schaden || 'Schaden'}${nrn.length ? ` (Foto ${nrn.join(', ')})` : ''}` : '';
+      body.push([`${gr.id} ${pt.nr}`, pt.text, e.ergebnis === 'ok' ? 'ok' : '', schaden, e.behebung || '']);
     }
   }
   const r = [];
@@ -154,7 +157,7 @@ function protokollTabelle(p, w, titel) {
   return r;
 }
 
-async function protokollKnoten(g, buch, k, f, bildKnoten) {
+async function protokollKnoten(g, buch, k, f, bildKnoten, bilder) {
   const w = G.wertVon(g, buch, k.id, f);
   if (!w || G.istLeer(f, w)) return [{ ...wertKnoten(feldAusgabe(g, buch, k.id, f), true), margin: [0, 0, 0, 6] }];
   const pk = g.kapitel.find((x) => x.id === f.protokoll);
@@ -167,10 +170,15 @@ async function protokollKnoten(g, buch, k, f, bildKnoten) {
     ['Mängelbeseitigung veranlasst', w.maengel || '–'],
     ['Wv. am', datumDE(w.wv) || '–'],
   ];
+  // Erst die Fotos laden, damit die Schadenszeilen ihre Fotonummern nennen können
+  const key = `protokoll:${G.feldKey(k.id, f.id)}`;
+  const fotoNr = new Map();
+  for (const b of await bilder(key)) if (b.punkt && b.foto) fotoNr.set(b.punkt, [...(fotoNr.get(b.punkt) || []), b.foto.nr]);
+  const fotos = await bildKnoten(key, 300);
   return [
     { table: { widths: [170, '*'], body: kopf.map(([a, b]) => [{ text: a, bold: true }, b]) }, layout: 'lightHorizontalLines', margin: [0, 0, 0, 6] },
-    ...protokollTabelle(pk.protokoll, w, null),
-    ...await bildKnoten(`protokoll:${G.feldKey(k.id, f.id)}`, 300),
+    ...protokollTabelle(pk.protokoll, w, null, fotoNr),
+    ...(fotos.length ? [{ text: 'Fotos zu den Schäden', bold: true, margin: [0, 6, 0, 2] }, ...fotos] : []),
   ];
 }
 

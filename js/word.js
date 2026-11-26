@@ -508,6 +508,10 @@ class Bearbeiter {
     if (!quelle || !nach || !stil) return false;
     const pk = this.g.kapitel.find((k) => k.id === t.feld.protokoll);
     const p = pk.protokoll;
+    // Schadensfotos vorab laden: Prüfpunkt → Fotonummern (für den Verweis in „Art des Schadens“)
+    const fotoListe = this.quellen.bilder ? await this.quellen.bilder(`protokoll:${op.feld}`) : [];
+    const fotoNr = new Map();
+    for (const b of fotoListe) if (b.punkt && b.foto) fotoNr.set(b.punkt, [...(fotoNr.get(b.punkt) || []), b.foto.nr]);
     const kopie = quelle.cloneNode(true);
     // Protokollart, Witterung, Art der Anlage ankreuzen
     this.listeAnkreuzen(kopie, [w.art, ...(w.witterung || []), ...(w.anlagenarten || [])].filter(Boolean), w.anlageSonst);
@@ -532,12 +536,12 @@ class Bearbeiter {
       if (!tr) continue;
       const zs = this.zellen(tr);
       const ok = ['', ...gr.punkte.map((pt) => (((w.punkte || {})[`${gr.id}.${pt.nr}`] || {}).ergebnis === 'ok' ? '✓' : ''))];
-      const schaeden = gr.punkte.map((pt) => ({ pt, e: (w.punkte || {})[`${gr.id}.${pt.nr}`] || {} })).filter((x) => x.e.ergebnis === 'schaden');
+      const schaeden = gr.punkte.map((pt) => ({ pt, e: (w.punkte || {})[`${gr.id}.${pt.nr}`] || {}, nrn: fotoNr.get(`${gr.id}.${pt.nr}`) || [] })).filter((x) => x.e.ergebnis === 'schaden');
       const rPr = this.rPrVorlage(zs[1], true);
       const pPr = kinder(kinder(zs[1], 'p')[1] || kinder(zs[1], 'p')[0], 'pPr')[0];
       if (zs[2]) this.zelleFuellen(zs[2], ok.map((x) => this.absatz(x, pPr, rPr)));
       if (zs[3]) this.zelleFuellen(zs[3], schaeden.map((x) => this.absatz(`${gr.id} ${x.pt.nr}`, pPr, rPr)));
-      if (zs[4]) this.zelleFuellen(zs[4], schaeden.map((x) => this.absatz(x.e.schaden || 'Schaden', pPr, rPr)));
+      if (zs[4]) this.zelleFuellen(zs[4], schaeden.map((x) => this.absatz(`${x.e.schaden || 'Schaden'}${x.nrn.length ? ` (Foto ${x.nrn.join(', ')})` : ''}`, pPr, rPr)));
       const beh = (b) => schaeden.map((x) => this.absatz(x.e.behebung === b ? 'X' : '', pPr, rPr));
       if (zs[5] && p.behebung[0]) this.zelleFuellen(zs[5], beh(p.behebung[0]));
       if (zs[6] && p.behebung[1]) this.zelleFuellen(zs[6], beh(p.behebung[1]));
@@ -547,8 +551,12 @@ class Bearbeiter {
     titel.appendChild(this.run(`Erstkontrolle bei der Bestandsaufnahme${w.datum ? ` am ${datumDE(w.datum)}` : ''}`, this.rPrVorlage(stil)));
     let hinter = nach;
     for (const x of [titel, kopie]) { hinter.parentNode.insertBefore(x, hinter.nextSibling); hinter = x; }
-    // Fotos zu Schäden
+    // Fotos zu Schäden (Bildunterschrift nennt Prüfpunkt und Schaden)
     const fotos = await this.bildAbsaetze(`protokoll:${op.feld}`, null, this.rPrVorlage(nach, true));
+    if (fotos.length) {
+      const t2 = this.absatz('Fotos zu den Schäden der Erstkontrolle:', null, this.rPrVorlage(nach));
+      hinter.parentNode.insertBefore(t2, hinter.nextSibling); hinter = t2;
+    }
     for (const x of fotos) { hinter.parentNode.insertBefore(x, hinter.nextSibling); hinter = x; }
     return true;
   }
