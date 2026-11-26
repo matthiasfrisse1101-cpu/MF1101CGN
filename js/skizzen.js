@@ -6,7 +6,7 @@ import * as S from './skizzenlogik.js';
 import { h, leere, meldung, bestaetigen, sprungziel } from './ui.js';
 import { verkleinere, ladeBild, canvasZuBlob, bildUrl } from './bilder.js';
 import { feldIndex, feldKey, neueZeilenId } from './gliederung.js';
-import { MASSSTAEBE, rasterWaehlen, massstabsleiste, pxProM } from './massskizze.js';
+import { MASSSTAEBE, rasterWaehlen, massstabsleiste, pxProM, winkelFang } from './massskizze.js';
 
 export function neueSkizzenId() {
   return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -163,6 +163,7 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
   let geplant = false;
   let laufenderStrich = null;
   let laengenSchreiben = true;
+  let winkelSchritt = 90; // Winkelfang: 0 = aus, 90 = waagerecht/senkrecht, 45 = auch diagonal
   const neuZeichnen = () => {
     if (geplant) return;
     geplant = true;
@@ -177,7 +178,7 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
         ctx.save();
         ctx.lineWidth = 3;
         for (const [pt, art] of [[a, laufenderStrich.fangA], [b, laufenderStrich.fangB]]) {
-          ctx.strokeStyle = art === 'endpunkt' ? '#c4001d' : '#ffb000';
+          ctx.strokeStyle = art === 'endpunkt' ? '#c4001d' : art === 'winkel' ? '#0047b3' : '#ffb000';
           ctx.strokeRect(pt[0] - r, pt[1] - r, 2 * r, 2 * r);
         }
         const l = S.laengeM(a, b, skizze);
@@ -271,7 +272,13 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
   canvas.addEventListener('pointermove', (ev) => {
     if (laufenderStrich && laufenderStrich.linie) {
       const [x, y] = punkt(ev);
-      const b = fang(x, y);
+      let b = fang(x, y);
+      // Winkelfang, außer ein Linienende wurde gefangen (Anschluss geht vor)
+      if (b.art !== 'endpunkt' && winkelSchritt) {
+        const a = laufenderStrich.punkte[0];
+        const wf = winkelFang(a, [x, y], { schritt: winkelSchritt, toleranz: 10, laengenSchritt: S.fangSchrittPx(skizze) });
+        if (wf.gefangen) b = { x: wf.x, y: wf.y, art: 'winkel' };
+      }
       laufenderStrich.punkte[1] = [b.x, b.y];
       laufenderStrich.fangB = b.art;
       neuZeichnen();
@@ -331,8 +338,12 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
     ));
     if (modus === 'linie') {
       werkzeug.append(h('p', { class: 'feld-hinweis' }, skizze.massstab
-        ? `Objektfang: Linien rasten an Rasterpunkten im Abstand von 10 cm (bei M 1:${skizze.massstab}) und an Linienenden ein. Die Länge wird beim Ziehen angezeigt.`
+        ? `Objektfang: Linien rasten an Rasterpunkten im Abstand von 10 cm (bei M 1:${skizze.massstab}) und an Linienenden ein; der Winkelfang legt fast waagerechte oder senkrechte Linien genau aus. Die Länge wird beim Ziehen angezeigt.`
         : 'Objektfang an Rasterpunkten und Linienenden. Für Längen in Metern unten einen Maßstab wählen („Im Raster skizzieren“).'));
+      werkzeug.append(h('select', { class: 'ziel-auswahl', onchange: (ev) => { winkelSchritt = Number(ev.target.value); } },
+        h('option', { value: 90, selected: winkelSchritt === 90 }, 'Winkelfang: waagerecht / senkrecht'),
+        h('option', { value: 45, selected: winkelSchritt === 45 }, 'Winkelfang: auch 45°'),
+        h('option', { value: 0, selected: winkelSchritt === 0 }, 'Winkelfang aus')));
       if (skizze.massstab) {
         werkzeug.append(h('label', { class: 'option' }, h('input', { type: 'checkbox', checked: laengenSchreiben, onchange: (ev) => { laengenSchreiben = ev.target.checked; } }), h('span', {}, 'Länge an die Linie schreiben')));
       }

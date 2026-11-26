@@ -51,10 +51,13 @@ Auf deinen Hinweis „Raster zeichenbar, Objektfang im Rasterpunkt, 10-cm-Raster
   - 3 neue automatische Tests: Rasterpunkte 10 cm, Länge 4,30 m exakt, Linienende hat Vorrang, ohne Maßstab 10-px-Raster, Lageplanlinie mit Länge.
   - Im Browser: Lageplan-Linie von −20,00/12,00 bis −7,70/12,00 m, zweite Linie setzt genau am Ende an.
   - Freie Skizze 1:250: 12,30 m und 8,00 m, angeschlossen und beschriftet.
-- **Prüfliste ergänzt:** 11. Gelingt das Zeichnen mit dem Finger trotz Fang, oder brauchst du zusätzlich einen Winkelfang (nur waagerecht/senkrecht)?
+- **Winkelfang** (Nachtrag 2): Weicht eine Linie höchstens 10° von waagerecht/senkrecht ab (wahlweise auch 45°), wird sie genau auf diese Richtung gelegt; die Länge rastet weiter auf 10 cm. Ein gefangenes Linienende hat Vorrang, damit Anschlüsse exakt bleiben. Auswahl im Werkzeug: „waagerecht / senkrecht“ (Standard), „auch 45°“, „aus“. Der Fangpunkt ist blau markiert, im Lageplan steht „Winkelfang“ neben der Länge.
+  - Getestet: 2 automatische Tests (waagerecht/senkrecht exakt, Länge 8,00 m bzw. 3,00 m; schräg bleibt frei; 45° nur, wenn gewählt). Im Browser: Lageplan-Linie exakt waagerecht mit 14,30 m; freie Skizze exakt senkrecht mit 9,90 m und Beschriftung.
+  - Hinweis: Auf dem kleinen Handybild entspricht der Fangradius für Linienenden bei 1:250 etwa 4 m in der Natur. Liegt ein Linienende so nah, rastet die Linie dort ein.
+- **Prüfliste ergänzt:** 11. Gelingt das Zeichnen mit dem Finger trotz Fang, und hilft der Winkelfang (waagerecht/senkrecht, auf Wunsch 45°)? Ist der Fangradius für Linienenden zu groß oder zu klein?
 
 ## Wie getestet
-- **118 automatische Tests, alle bestanden** (inkl. Nachtrag). Neu, wie im Auftrag verlangt:
+- **120 automatische Tests, alle bestanden** (inkl. Nachträge). Neu, wie im Auftrag verlangt:
   - **erzeugte Abmessungen entsprechen den eingegebenen Maßen**, nämlich die Pixelkoordinaten von Oberkante (42 × 18 m), Sohle (34 × 10 m) und Böschung/Sohle im Querschnitt;
   - **fehlende Maße erscheinen offen** („?“, graue Linie, „Maß fehlt“), auch bei fehlender Tiefe im Schnitt und bei Werten „zur Prüfung“.
   - Außerdem:

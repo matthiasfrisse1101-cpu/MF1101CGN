@@ -165,3 +165,18 @@ test('Lageplan: im Raster gezeichnete Linie mit Länge, Fang 10 cm', () => {
   wahr(svg.includes(`x1="${r(x1)}" y1="${r(y1)}" x2="${r(x2)}"`), 'Linie falsch platziert');
   wahr(svg.includes('12,30 m'), 'Länge fehlt');
 });
+
+test('Winkelfang: nahe waagerecht/senkrecht wird exakt, Länge rastet auf 10 cm', () => {
+  const w = M.winkelFang([0, 0], [8.04, 0.6], { schritt: 90, toleranz: 10, laengenSchritt: 0.1 });
+  gleich([w.gefangen, w.x, w.y, w.winkel], [true, 8, 0, 0]);
+  const s = M.winkelFang([5, 5], [5.5, -2.96], { schritt: 90, toleranz: 10, laengenSchritt: 0.1 });
+  gleich([s.gefangen, s.x, s.y, s.winkel], [true, 5, -3, 270]);
+});
+
+test('Winkelfang: schräg bleibt frei; 45° nur, wenn gewählt', () => {
+  gleich(M.winkelFang([0, 0], [5, 3], { schritt: 90 }).gefangen, false);
+  const d = M.winkelFang([0, 0], [5, 4.6], { schritt: 45, toleranz: 10, laengenSchritt: 0.1 });
+  gleich([d.gefangen, d.winkel], [true, 45]);
+  wahr(Math.abs(d.x - d.y) < 0.001, 'nicht diagonal');
+  gleich(M.winkelFang([0, 0], [5, 4.6], { schritt: 0 }).gefangen, false);
+});

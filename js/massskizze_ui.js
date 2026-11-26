@@ -181,6 +181,7 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
   };
   let laufend = null; // Linie, die gerade gezogen wird
   let laengeBeschriften = true;
+  let winkelSchritt = 90; // Winkelfang: 0 aus, 90 waagerecht/senkrecht, 45 auch diagonal
   const treffer = (px, py) => {
     for (let i = w.elemente.length - 1; i >= 0; i--) {
       const el = w.elemente[i];
@@ -243,10 +244,18 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
   flaeche.addEventListener('pointermove', (ev) => {
     if (laufend) {
       const p = punktM(ev);
-      laufend.punkte[1] = [p.x, p.y];
+      let art = p.art;
+      let ziel = [p.x, p.y];
+      if (art !== 'endpunkt' && winkelSchritt && fang) {
+        const r = flaeche.getBoundingClientRect();
+        const roh = M.lpMeter((ev.clientX - r.left) * (M.BREITE / r.width), (ev.clientY - r.top) * (M.BREITE / r.width), aktuell.massstab);
+        const wf = M.winkelFang(laufend.punkte[0], roh, { schritt: winkelSchritt, toleranz: 10, laengenSchritt: M.FANG_M });
+        if (wf.gefangen) { ziel = [wf.x, wf.y]; art = 'winkel'; }
+      }
+      laufend.punkte[1] = ziel;
       zeichne();
       const [a, b] = laufend.punkte;
-      infoZeile.textContent = `Linie: ${M.mDE(Math.hypot(b[0] - a[0], b[1] - a[1]))} m${p.art === 'endpunkt' ? ' · gefangen am Linienende' : ' · Rasterpunkt 10 cm'}`;
+      infoZeile.textContent = `Linie: ${M.mDE(Math.hypot(b[0] - a[0], b[1] - a[1]))} m${art === 'endpunkt' ? ' · gefangen am Linienende' : art === 'winkel' ? ' · Winkelfang' : ' · Rasterpunkt 10 cm'}`;
       return;
     }
     if (!ziehen) return;
@@ -276,6 +285,10 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
       h('div', { class: 'wz-zeile' }, mk('drehen', '↻ Drehen'), mk('loeschen', '🧽 Löschen')));
     if (modus === 'linie') {
       wz.append(h('p', { class: 'feld-hinweis' }, 'Am Anfangspunkt aufsetzen, zum Endpunkt ziehen, loslassen. Objektfang: Rasterpunkte alle 10 cm, Enden von Linien und Zaunecken.'),
+        h('select', { class: 'ziel-auswahl', onchange: (ev) => { winkelSchritt = Number(ev.target.value); } },
+          h('option', { value: 90, selected: winkelSchritt === 90 }, 'Winkelfang: waagerecht / senkrecht'),
+          h('option', { value: 45, selected: winkelSchritt === 45 }, 'Winkelfang: auch 45°'),
+          h('option', { value: 0, selected: winkelSchritt === 0 }, 'Winkelfang aus')),
         h('label', { class: 'option' }, h('input', { type: 'checkbox', checked: laengeBeschriften, onchange: (ev) => { laengeBeschriften = ev.target.checked; } }), h('span', {}, 'Länge an die Linie schreiben')));
     }
     const sym = h('div', { class: 'symbol-raster' });

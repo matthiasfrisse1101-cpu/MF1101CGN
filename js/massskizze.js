@@ -44,6 +44,23 @@ export function amRaster(wertM, rasterM) {
 // Fang beim Zeichnen im Lageplan: Rasterpunkte alle 10 cm in der Natur.
 export const FANG_M = 0.1;
 
+// Winkelfang: Liegt die Richtung von a nach b nahe an einem Vielfachen von `schritt` Grad (90 = waagerecht/senkrecht,
+// 45 = zusätzlich diagonal), wird b genau auf diese Richtung gelegt; die Länge rastet auf `laengenSchritt`.
+// Liefert { x, y, gefangen, winkel }. Koordinaten in beliebiger Einheit (Pixel oder Meter).
+export function winkelFang(a, b, { schritt = 90, toleranz = 10, laengenSchritt = 0 } = {}) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const l = Math.hypot(dx, dy);
+  if (!schritt || l === 0) return { x: b[0], y: b[1], gefangen: false, winkel: null };
+  const w = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const ziel = Math.round(w / schritt) * schritt;
+  if (Math.abs(w - ziel) > toleranz) return { x: b[0], y: b[1], gefangen: false, winkel: null };
+  let laenge = l * Math.cos(((w - ziel) * Math.PI) / 180); // Projektion auf die gefangene Richtung
+  if (laengenSchritt) laenge = Math.round(laenge / laengenSchritt) * laengenSchritt;
+  const rad = (ziel * Math.PI) / 180;
+  const rund = (v) => Math.round(v * 1000) / 1000;
+  return { x: rund(a[0] + laenge * Math.cos(rad)), y: rund(a[1] + laenge * Math.sin(rad)), gefangen: true, winkel: ((ziel % 360) + 360) % 360 };
+}
+
 export function mDE(z, stellen = 2) {
   return z.toFixed(stellen).replace('.', ',');
 }
