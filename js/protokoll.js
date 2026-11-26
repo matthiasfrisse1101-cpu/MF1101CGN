@@ -5,7 +5,14 @@
 //         punkte: { 'A.1': { ergebnis: 'ok'|'schaden', schaden, behebung, fotos: [] } }, maengel, wv }
 import { h, leere } from './ui.js';
 import { fotoFeld } from './fotos.js';
-import { feldKey, wertVon, sichtbareFelder } from './gliederung.js';
+import { feldKey, wertVon, sichtbareFelder, anlagenartVorschlag } from './gliederung.js';
+
+// Vorschlag „Art der Anlage“: aus den Regeln der Gliederung ("anlagenartRegeln"); ältere Gliederungen ohne Regeln
+// gleichen wie bisher die Bezeichnungen der Teilbauwerke ab. Ergebnis: { arten, sonstiges, hinweise }
+export function anlagenartVorschlaege(protokoll, g, buch) {
+  if (Array.isArray(protokoll.anlagenartRegeln)) return anlagenartVorschlag(protokoll, g, buch);
+  return { arten: vorschlagAnlagenarten(protokoll, g, buch), sonstiges: [], hinweise: [] };
+}
 
 export function vorschlagAnlagenarten(protokoll, g, buch) {
   const labels = (g.teilbauwerke || []).filter((t) => (buch.teilbauwerke || []).includes(t.id)).map((t) => t.label.toLowerCase());
@@ -73,7 +80,7 @@ export function protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext, erfas
     const v = w();
     // Kopf: Werte aus dem Kapitel des Protokolls (A 5.2), nur Anzeige
     const kopf = h('div', { class: 'protokoll-kopf' });
-    for (const f of sichtbareFelder(pk, buch)) {
+    for (const f of sichtbareFelder(pk, buch, g)) {
       const x = wertVon(g, buch, pk.id, f);
       kopf.append(h('div', {}, h('span', { class: 'feld-label' }, `${f.label}: `), x ? String(x) : h('em', {}, '(noch leer – in ' + (pk.nr || pk.id) + ')')));
     }
@@ -84,11 +91,25 @@ export function protokollFeld({ g, buch, kap, feld, e, setzeWert, kontext, erfas
     box.append(auswahl('Angaben zur Witterung', p.witterung || [], v.witterung, true, (l) => { speichern({ witterung: l }); formularNeu(); }));
     if ((v.witterung || []).some((x) => /^sonstige/i.test(x))) box.append(textfeld('Sonstige Witterung', v.witterungSonst, (t) => speichern({ witterungSonst: t })));
 
-    const vor = vorschlagAnlagenarten(p, g, buch).filter((o) => !(v.anlagenarten || []).includes(o));
-    if (vor.length) {
-      box.append(h('div', { class: 'vorschlag' }, `Vorschlag aus dem Deckblatt: ${vor.join(', ')} `,
-        h('button', { class: 'knopf klein', onclick: () => { speichern({ anlagenarten: p.anlagenarten.filter((o) => (v.anlagenarten || []).includes(o) || vor.includes(o)) }); formularNeu(); } }, 'Übernehmen')));
+    const av = anlagenartVorschlaege(p, g, buch);
+    const sonstOption = (p.anlagenarten || []).find((o) => /^sonstiges/i.test(o));
+    const vor = av.arten.filter((o) => !(v.anlagenarten || []).includes(o));
+    const sonstText = av.sonstiges.join(', ');
+    const sonstFehlt = sonstText && sonstOption && !((v.anlagenarten || []).includes(sonstOption) && (v.anlageSonst || '').includes(sonstText));
+    if (vor.length || sonstFehlt) {
+      const teile = [...vor, ...(sonstFehlt ? [`${sonstOption} ${sonstText}`] : [])];
+      box.append(h('div', { class: 'vorschlag' }, `Vorschlag aus Deckblatt und Bauform: ${teile.join(', ')} `,
+        h('button', {
+          class: 'knopf klein',
+          onclick: () => {
+            const neu = new Set([...(v.anlagenarten || []), ...vor, ...(sonstFehlt ? [sonstOption] : [])]);
+            const aend = { anlagenarten: p.anlagenarten.filter((o) => neu.has(o)) };
+            if (sonstFehlt) aend.anlageSonst = v.anlageSonst ? `${v.anlageSonst}, ${sonstText}` : sonstText;
+            speichern(aend); formularNeu();
+          },
+        }, 'Übernehmen')));
     }
+    for (const t of av.hinweise) box.append(h('div', { class: 'hinweis' }, t));
     box.append(auswahl('Art der Anlage (Mehrfachnennung möglich)', p.anlagenarten || [], v.anlagenarten, true, (l) => { speichern({ anlagenarten: l }); formularNeu(); }));
     if ((v.anlagenarten || []).some((x) => /^sonstiges/i.test(x))) box.append(textfeld('Sonstiges', v.anlageSonst, (t) => speichern({ anlageSonst: t })));
 

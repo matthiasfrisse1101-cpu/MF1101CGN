@@ -1,11 +1,11 @@
 {
   "format": 1,
   "vorlage": "TESTVORLAGE – keine echte Dienststellen-Vorlage",
-  "version": "test-2026-11-24",
+  "version": "test-2026-11-26",
   "testdaten": true,
   "hinweise": "Dies ist eine Test-Gliederung mit erfundenen Feldern. Für echte Beckenbücher laden Sie unter Einstellungen das Vorlagenpaket Ihrer Dienststelle.",
   "teilbauwerke": [
-    { "id": "testbecken", "label": "Testbecken" },
+    { "id": "testbecken", "label": "Testbecken", "hilfe": "Testhilfe: Woran man das Testbecken erkennt." },
     { "id": "testschacht", "label": "Testschacht" },
     { "id": "testwand", "label": "Testwand" }
   ],
@@ -34,7 +34,25 @@
         { "id": "auswahl", "label": "Test-Auswahl", "art": "auswahl", "optionen": ["Option A", "Option B"], "ort": "vor_ort" },
         { "id": "mehrfach", "label": "Test-Mehrfachauswahl", "art": "mehrfach", "optionen": ["Eins", "Zwei", "Drei"], "ort": "vor_ort" },
         { "id": "janein", "label": "Test-Ja/Nein", "art": "janein", "ort": "vor_ort" },
+        { "id": "t_merkmal", "label": "Test-Merkmal", "art": "auswahl", "optionen": ["Variante A", "Variante B"], "ort": "vor_ort", "vorschlag": true, "ausgabe": false, "gruppe": "Testgruppe (Vorschlag der App)",
+          "stichwoerter": ["merkmal"], "sichtbarWenn": { "teilbauwerk": ["testbecken"] } },
+        { "id": "t_folge", "label": "Test-Folgefrage", "art": "auswahl", "optionen": ["Folge 1", "Folge 2"], "ort": "vor_ort", "vorschlag": true, "ausgabe": false, "gruppe": "Testgruppe (Vorschlag der App)",
+          "sichtbarWenn": { "teilbauwerk": ["testbecken"], "felder": [ { "feld": "T1.t_merkmal", "ist": ["Variante B"] } ] } },
+        { "id": "t_lage", "label": "Test-Lage", "art": "mehrfach", "optionen": ["vorn", "hinten"], "ort": "vor_ort", "vorschlag": true, "ausgabe": false, "gruppe": "Testgruppe (Vorschlag der App)",
+          "sichtbarWenn": { "teilbauwerk": ["testwand"] } },
+        { "id": "t_reihe", "label": "Test-Reihenfolge", "art": "text", "ort": "vor_ort", "vorschlag": true, "ausgabe": false, "gruppe": "Testgruppe (Vorschlag der App)",
+          "vorschlagAus": "teilbauwerke", "vorschlagTrenner": " → ", "vorschlagFreie": true },
         { "id": "art", "label": "Test-Art (Vorschlag aus Teilbauwerken)", "art": "text", "vorschlagAus": "teilbauwerke", "ort": "vor_ort" },
+        { "id": "t_kombi", "label": "Test-Kombination (Bausteine)", "art": "text", "ort": "vor_ort",
+          "vorschlagBausteine": [
+            { "teilbauwerk": "testbecken", "wenn": { "alle": [ { "teilbauwerk": ["testbecken"] }, { "felder": [ { "feld": "T1.t_lage", "ist": ["hinten"] } ] } ] }, "text": "Testbecken mit Testwand",
+              "zusaetze": [ { "wenn": { "felder": [ { "feld": "T1.t_merkmal", "ist": ["Variante B"] } ] }, "text": "Variante B" } ] },
+            { "teilbauwerk": "testbecken", "wenn": { "alle": [ { "teilbauwerk": ["testbecken"] }, { "nicht": { "felder": [ { "feld": "T1.t_lage", "ist": ["hinten"] } ] } } ] }, "text": "Testbecken",
+              "zusaetze": [ { "wenn": { "felder": [ { "feld": "T1.t_merkmal", "ist": ["Variante B"] } ] }, "text": "Variante B" } ] },
+            { "teilbauwerk": "testschacht", "text": "Testschacht" }
+          ] },
+        { "id": "t_ja", "label": "Test-Ja/Nein mit Vorschlagsregel", "art": "janein", "ort": "vor_ort",
+          "vorschlagRegeln": [ { "wenn": { "teilbauwerk": ["testwand"] }, "wert": true } ] },
         { "id": "meisterei", "label": "Test-Meisterei", "art": "text", "ort": "stammdaten", "stammdaten": "test_meisterei" },
         { "id": "wandfeld", "label": "Test-Feld nur bei Testwand", "art": "text", "ort": "vor_ort", "sichtbarWenn": { "teilbauwerk": ["testwand"] } }
       ]
@@ -90,6 +108,11 @@
           { "id": "B", "titel": "Testgruppe B", "punkte": [ { "nr": "1", "text": "Testpunkt B 1" } ] }
         ],
         "behebung": ["Test-AM", "Test-NL"],
+        "anlagenartRegeln": [
+          { "wenn": { "teilbauwerk": ["testbecken"] }, "vorschlag": "Testbecken (Testart)" },
+          { "wenn": { "teilbauwerk": ["testwand"] }, "sonstiges": "Testwand" },
+          { "wenn": { "felder": [ { "feld": "T1.t_merkmal", "ist": ["Variante B"] } ] }, "hinweis": "Testhinweis zu Variante B" }
+        ],
         "fussnote": "*: Testfußnote"
       },
       "felder": [

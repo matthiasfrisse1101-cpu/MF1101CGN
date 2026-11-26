@@ -196,6 +196,8 @@ function teilbauwerkAuswahl(g, ziel, beiAenderung) {
       },
     });
     box.append(h('label', { class: 'option' }, cb, h('span', {}, t.label)));
+    // Hilfe aus der Gliederung: „Woran erkenne ich das?“
+    if (t.hilfe) box.append(h('details', { class: 'tb-hilfe' }, h('summary', {}, 'Woran erkenne ich das?'), h('p', {}, t.hilfe)));
   }
   const anzahlFrei = g.freieTeilbauwerke || 0;
   for (let i = 0; i < anzahlFrei; i++) {
@@ -267,7 +269,7 @@ async function bildschirmBuch(id) {
   main.append(liste);
 
   // Zuschaltbare Abschnitte
-  const zuschaltbar = g.kapitel.filter((k) => k.zuschaltbar && G.istSichtbar(k, buch));
+  const zuschaltbar = g.kapitel.filter((k) => k.zuschaltbar && G.istSichtbar(k, buch, g));
   if (zuschaltbar.length) {
     const box = h('div', { class: 'abschnitt' }, h('h2', {}, 'Zusätzliche Abschnitte'));
     for (const k of zuschaltbar) {
@@ -356,8 +358,8 @@ async function bildschirmKapitel(buchId, kapId) {
   if (kap.id === 'DECK' || (g.testdaten && idx === 0)) {
     main.append(teilbauwerkAuswahl(g, buch, async (art) => {
       await aendern(buch);
-      // Ändern sich die Teilbauwerke, können Felder dieses Kapitels ein- oder ausgeblendet werden.
-      if (art === 'haken' && (kap.felder || []).some((f) => f.sichtbarWenn)) {
+      // Ändern sich die Teilbauwerke, können Felder ein- oder ausgeblendet werden und Vorschläge sich ändern.
+      if (art === 'haken') {
         const y = window.scrollY;
         await bildschirmKapitel(buchId, kapId);
         window.scrollTo(0, y);
@@ -365,12 +367,25 @@ async function bildschirmKapitel(buchId, kapId) {
     }));
   }
 
-  const felder = G.sichtbareFelder(kap, buch);
+  const felder = G.sichtbareFelder(kap, buch, g);
   const neuZeichnen = async () => { const y = window.scrollY; await bildschirmKapitel(buchId, kapId); window.scrollTo(0, y); };
   if (felder.some((f) => !f.aus && !['foto', 'skizze', 'pruefprotokoll'].includes(f.art))) {
     main.append(sammeldiktatBox({ buch, kap, felder, aendern, neuZeichnen }));
   }
-  for (const feld of felder) main.append(feldBlock(g, buch, kap, feld));
+  // Ändert sich ein Feld, von dem andere Felder abhängen (Sichtbarkeit, Vorschläge), wird das Kapitel neu aufgebaut.
+  const abhaengig = G.abhaengigkeitsfelder(g);
+  const beiAenderung = (key) => {
+    if (!abhaengig.has(key)) return;
+    clearTimeout(neuAufbauTimer);
+    neuAufbauTimer = setTimeout(async () => { await db.allesGespeichert(); neuZeichnen(); }, 250);
+  };
+  let gruppe = null;
+  for (const feld of felder) {
+    // Zwischenüberschrift für zusammengehörige Felder (z. B. „Bauform (Vorschlag der App)“)
+    if (feld.gruppe && feld.gruppe !== gruppe) main.append(h('h2', { class: 'zwischenueberschrift' }, feld.gruppe));
+    gruppe = feld.gruppe || null;
+    main.append(feldBlock(g, buch, kap, feld, beiAenderung, neuZeichnen));
+  }
   main.append(notizBox(buch, kap, aendern));
 
   const naechstes = kapitelListe[idx + 1];
@@ -386,12 +401,14 @@ async function bildschirmKapitel(buchId, kapId) {
   );
 }
 
+let neuAufbauTimer = null;
+
 function eintrag(buch, key) {
   if (!buch.werte[key]) buch.werte[key] = { wert: undefined, status: null, geaendert: null };
   return buch.werte[key];
 }
 
-function feldBlock(g, buch, kap, feld) {
+function feldBlock(g, buch, kap, feld, beiAenderung = () => {}, neuZeichnen = () => {}) {
   const key = G.feldKey(kap.id, feld.id);
   const block = h('section', { class: 'feldblock', id: `feld-${key}` });
   const statusZeile = h('div', { class: 'statuszeile' });
@@ -447,9 +464,19 @@ function feldBlock(g, buch, kap, feld) {
     e.geaendert = new Date().toISOString();
     aendern(buch);
     aktualisiereStatus();
+    beiAenderung(key);
   };
 
   block.append(eingabe(g, buch, kap, feld, e, setzeWert));
+  // Vorschlag (aus Teilbauwerken, Regeln oder Bausteinen) – nie automatisch eingetragen
+  const v = G.vorschlagFuerFeld(g, buch, feld);
+  if (v !== undefined && !G.gleicherWert(v, e.wert)) {
+    const anzeige = v === true ? 'Ja' : v === false ? 'Nein' : Array.isArray(v) ? v.join(', ') : String(v);
+    const leer = G.istLeer(feld, e.wert);
+    block.append(h('div', { class: 'vorschlag' },
+      leer ? `Vorschlag: ${anzeige} ` : `Vorschlag weicht ab – übernehmen? ${anzeige} `,
+      h('button', { class: 'knopf klein', onclick: async () => { setzeWert(v); await db.allesGespeichert(); neuZeichnen(); } }, 'Übernehmen')));
+  }
   block.append(statusZeile);
   aktualisiereStatus();
   return block;
@@ -463,15 +490,7 @@ function eingabe(g, buch, kap, feld, e, setzeWert) {
         type: feld.art === 'datum' ? 'date' : 'text', value: e.wert ?? '', autocomplete: 'off',
         oninput: (ev) => setzeWert(ev.target.value),
       });
-      const box = h('div', {}, inp);
-      if (feld.vorschlagAus) {
-        const v = G.vorschlagAusTeilbauwerken(g, buch, feld);
-        if (v && v !== e.wert) {
-          box.append(h('div', { class: 'vorschlag' }, `Vorschlag: ${v} `,
-            h('button', { class: 'knopf klein', onclick: (ev) => { inp.value = v; setzeWert(v); ev.target.parentElement.remove(); } }, 'Übernehmen')));
-        }
-      }
-      return box;
+      return h('div', {}, inp);
     }
     case 'langtext':
       return mitwachsen(h('textarea', { rows: 3, oninput: (ev) => setzeWert(ev.target.value) }, e.wert ?? ''));

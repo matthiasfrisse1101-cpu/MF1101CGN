@@ -244,3 +244,9 @@ select.ziel-auswahl {
 .pruef-text { margin-bottom: 6px; }
 .option-knopf.aktiv.schaden { background: var(--gefahr); border-color: var(--gefahr); }
 .notizen textarea { margin-top: 6px; }
+
+/* Bauform (Etappe 4a) */
+.tb-hilfe { margin: 0 0 6px 40px; font-size: .9rem; }
+.tb-hilfe summary { color: var(--primaer); font-weight: 600; min-height: 40px; display: flex; align-items: center; }
+.tb-hilfe p { margin: 4px 0 8px; background: var(--flaeche); padding: 8px 10px; border-radius: 8px; }
+.zwischenueberschrift { font-size: 1.05rem; margin: 24px 0 0; padding: 8px 10px; background: var(--flaeche); border-left: 6px solid var(--primaer); border-radius: 6px; }

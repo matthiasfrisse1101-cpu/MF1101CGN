@@ -67,7 +67,7 @@ test('Fortschritt zählt nur sichtbare Felder', () => {
   b.werte['T1.laenge'] = { wert: '', status: 'offen' };
   b.werte['T1.datum'] = { wert: '', status: 'aus_akten' };
   const r = G.kapitelFortschritt(testG, b, kap(testG, 'T1'));
-  gleich([r.gesamt, r.geklaert, r.offen, r.aus_akten, r.pflichtLeer], [10, 1, 1, 1, 0]);
+  gleich([r.gesamt, r.geklaert, r.offen, r.aus_akten, r.pflichtLeer], [13, 1, 1, 1, 0]);
 });
 
 test('Mindestumfang', () => {
@@ -189,7 +189,7 @@ if (echt) {
   });
   test('Echte Gliederung: Vorschlag Art des Bauwerks ohne Tauchwand/Schacht', () => {
     const f = echt.kapitel.find((k) => k.id === 'A1').felder.find((x) => x.id === 'art_bauwerk');
-    gleich(G.vorschlagAusTeilbauwerken(echt, { teilbauwerke: ['rrb', 'tauchwand', 'schacht', 'absetzbecken'] }, f), 'Absetzbecken, Regenrückhaltebecken');
+    gleich(G.vorschlagFuerFeld(echt, { teilbauwerke: ['rrb', 'tauchwand', 'schacht', 'absetzbecken'], werte: {} }, f), 'Absetzbecken, Regenrückhaltebecken');
   });
 } else {
   test('Echte Gliederung (übersprungen – nicht vorhanden)', () => {});
