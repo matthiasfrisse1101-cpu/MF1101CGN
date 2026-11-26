@@ -150,7 +150,7 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
   const andereIds = ((buch.werte[skizze.feldKey] || {}).wert || []).filter((id) => id !== skizze.id);
   const andereMarken = S.markenNummern(await ladeSkizzen(andereIds));
 
-  let modus = 'stift';
+  let modus = skizze.massstab ? 'linie' : 'stift'; // mit Maßstab: im Raster zeichnen
   let farbe = S.FARBEN.schwarz;
   const m = S.masse(skizze);
   let dicke = m.duenn;
@@ -162,6 +162,7 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
   const ctx = canvas.getContext('2d');
   let geplant = false;
   let laufenderStrich = null;
+  let laengenSchreiben = true;
   const neuZeichnen = () => {
     if (geplant) return;
     geplant = true;
@@ -169,8 +170,29 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
       geplant = false;
       const anzeigen = laufenderStrich ? { ...skizze, elemente: [...skizze.elemente, laufenderStrich] } : skizze;
       S.zeichne(ctx, anzeigen, hintergrund, { raster: true, auswahl });
+      // Linie im Entstehen: Fangpunkt markieren, Länge anzeigen
+      if (laufenderStrich && laufenderStrich.linie) {
+        const [a, b] = laufenderStrich.punkte;
+        const r = Math.max(8, m.duenn * 3);
+        ctx.save();
+        ctx.lineWidth = 3;
+        for (const [pt, art] of [[a, laufenderStrich.fangA], [b, laufenderStrich.fangB]]) {
+          ctx.strokeStyle = art === 'endpunkt' ? '#c4001d' : '#ffb000';
+          ctx.strokeRect(pt[0] - r, pt[1] - r, 2 * r, 2 * r);
+        }
+        const l = S.laengeM(a, b, skizze);
+        if (l !== null) {
+          ctx.font = `bold ${m.text}px system-ui, sans-serif`;
+          ctx.lineWidth = 8; ctx.strokeStyle = '#fff';
+          const t = `${String(l.toFixed(2)).replace('.', ',')} m`;
+          ctx.strokeText(t, b[0] + r + 6, b[1] - r - 6);
+          ctx.fillStyle = '#0b3d6b'; ctx.fillText(t, b[0] + r + 6, b[1] - r - 6);
+        }
+        ctx.restore();
+      }
     });
   };
+  const fang = (x, y) => S.fangPunkt(x, y, skizze, toleranz() * 1.5);
 
   // ----- Speichern -----
   let bildTimer = null;
@@ -211,6 +233,12 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
       canvas.setPointerCapture(ev.pointerId);
       laufenderStrich = { typ: 'strich', farbe, dicke, punkte: [[x, y]] };
       neuZeichnen();
+    } else if (modus === 'linie') {
+      // Gerade Linie im Raster: Anfang und Ende rasten ein (Rasterpunkt 10 cm bzw. Linienende)
+      canvas.setPointerCapture(ev.pointerId);
+      const a = fang(x, y);
+      laufenderStrich = { typ: 'strich', farbe, dicke, punkte: [[a.x, a.y], [a.x, a.y]], linie: true, fangA: a.art, fangB: a.art };
+      neuZeichnen();
     } else if (modus === 'marke') {
       merke();
       skizze.elemente.push({ typ: 'marke', nr: S.naechsteMarkenNr(alleMarken()), x: Math.round(x), y: Math.round(y) });
@@ -241,7 +269,13 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
     }
   });
   canvas.addEventListener('pointermove', (ev) => {
-    if (laufenderStrich) {
+    if (laufenderStrich && laufenderStrich.linie) {
+      const [x, y] = punkt(ev);
+      const b = fang(x, y);
+      laufenderStrich.punkte[1] = [b.x, b.y];
+      laufenderStrich.fangB = b.art;
+      neuZeichnen();
+    } else if (laufenderStrich) {
       const evs = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [ev];
       for (const e of (evs.length ? evs : [ev])) laufenderStrich.punkte.push(punkt(e));
       neuZeichnen();
@@ -253,7 +287,20 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
     }
   });
   const ende = () => {
-    if (laufenderStrich) {
+    if (laufenderStrich && laufenderStrich.linie) {
+      const s = laufenderStrich;
+      laufenderStrich = null;
+      const [a, b] = s.punkte;
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 1) { neuZeichnen(); return; }
+      merke();
+      skizze.elemente.push({ typ: 'strich', farbe: s.farbe, dicke: s.dicke, punkte: [a, b], linie: true });
+      const l = S.laengeM(a, b, skizze);
+      if (laengenSchreiben && l !== null) {
+        // Länge an die Linie schreiben (Mitte, etwas versetzt)
+        skizze.elemente.push({ typ: 'text', text: `${l.toFixed(2).replace('.', ',')} m`, x: Math.round((a[0] + b[0]) / 2 + 10), y: Math.round((a[1] + b[1]) / 2 - 12), farbe: '#0b3d6b' });
+      }
+      geaendert();
+    } else if (laufenderStrich) {
       const s = laufenderStrich;
       laufenderStrich = null;
       s.punkte = S.duenneAus(s.punkte);
@@ -278,14 +325,23 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
       modusKnopf('text', 'T Text'),
       modusKnopf('marke', tabellenKey ? '① Eingriffsstelle' : '① Marke'),
     ), h('div', { class: 'wz-zeile' },
+      modusKnopf('linie', '📏 Linie im Raster'),
       modusKnopf('verschieben', '✋ Verschieben'),
       modusKnopf('loeschen', '🧽 Löschen'),
     ));
-    if (modus === 'stift' || modus === 'text') {
+    if (modus === 'linie') {
+      werkzeug.append(h('p', { class: 'feld-hinweis' }, skizze.massstab
+        ? `Objektfang: Linien rasten an Rasterpunkten im Abstand von 10 cm (bei M 1:${skizze.massstab}) und an Linienenden ein. Die Länge wird beim Ziehen angezeigt.`
+        : 'Objektfang an Rasterpunkten und Linienenden. Für Längen in Metern unten einen Maßstab wählen („Im Raster skizzieren“).'));
+      if (skizze.massstab) {
+        werkzeug.append(h('label', { class: 'option' }, h('input', { type: 'checkbox', checked: laengenSchreiben, onchange: (ev) => { laengenSchreiben = ev.target.checked; } }), h('span', {}, 'Länge an die Linie schreiben')));
+      }
+    }
+    if (modus === 'stift' || modus === 'text' || modus === 'linie') {
       const farbKnopf = (name, wert) => h('button', { class: `wz farbe ${farbe === wert ? 'aktiv' : ''}`, style: `--f:${wert}`, onclick: () => { farbe = wert; zeichneWerkzeug(); } }, name);
       const zeile = h('div', { class: 'wz-zeile' }, farbKnopf('schwarz', S.FARBEN.schwarz), farbKnopf('rot', S.FARBEN.rot), farbKnopf('blau', S.FARBEN.blau));
       werkzeug.append(zeile);
-      if (modus === 'stift') {
+      if (modus === 'stift' || modus === 'linie') {
         werkzeug.append(h('div', { class: 'wz-zeile' },
           h('button', { class: `wz ${dicke === m.duenn ? 'aktiv' : ''}`, onclick: () => { dicke = m.duenn; zeichneWerkzeug(); } }, 'dünn'),
           h('button', { class: `wz ${dicke === m.dick ? 'aktiv' : ''}`, onclick: () => { dicke = m.dick; zeichneWerkzeug(); } }, 'dick')));
@@ -293,6 +349,7 @@ export async function bildschirmSkizze(umgebung, buchId, skizzeId) {
     }
     const hilfe = {
       stift: 'Mit dem Finger zeichnen.',
+      linie: 'Am Anfangspunkt aufsetzen, zum Endpunkt ziehen, loslassen.',
       text: 'Auf die Stelle tippen, an der die Beschriftung stehen soll.',
       marke: tabellenKey ? 'Auf die Eingriffsstelle tippen – sie bekommt die nächste Nummer und eine Zeile in der Tabelle.' : 'Auf die Stelle tippen – sie bekommt die nächste Nummer.',
       verschieben: 'Marke oder Text antippen und ziehen.',

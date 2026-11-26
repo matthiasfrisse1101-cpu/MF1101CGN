@@ -38,8 +38,23 @@
   - Beide nutzen die Sichtbarkeit nach Antworten aus Etappe 4a.
 - **Gliederung:** neue Feldart `massskizze` mit `masse` (Zuordnung der Hauptmaße) und `funktionsskizze`; die App prüft beides beim Laden. Echte Gliederung Version **2026-11-27** (bitte neu laden). Das Beispielbuch zeigt einen fertig bestückten Lageplan.
 
+## Nachtrag: Zeichnen im Raster mit Objektfang (27.11.2026)
+Auf deinen Hinweis „Raster zeichenbar, Objektfang im Rasterpunkt, 10-cm-Raster“:
+- **Werkzeug „📏 Linie im Raster“** im Skizzen-Editor und im Lageplan-Editor: am Anfangspunkt aufsetzen, zum Endpunkt ziehen, loslassen.
+  - **Objektfang:** Anfang und Ende rasten an **Rasterpunkten im Abstand von 10 cm in der Natur** ein. Liegt ein vorhandenes Linienende (im Lageplan auch eine Zaunecke) in der Nähe, rastet die Linie dort ein. So schließen Linien genau aneinander an.
+  - Beim Ziehen markiert ein Quadrat den Fangpunkt (rot am Linienende, gelb am Rasterpunkt), daneben steht die **Länge in Metern**.
+  - Auf Wunsch wird die **Länge an die Linie geschrieben** („12,30 m“).
+- Das sichtbare Raster bleibt grob (z. B. 5 m bei 1:250), damit man etwas erkennt. Gefangen wird auf dem unsichtbaren 10-cm-Raster.
+- Freie Skizze mit Maßstab: Das Linienwerkzeug ist voreingestellt. Ohne Maßstab rastet es auf 10 Pixel ein und zeigt keine Längen; der Hinweis empfiehlt dann, einen Maßstab zu wählen.
+- Im Lageplan richten sich auch Symbole auf 10 cm aus (vorher 1 m). Den Objektfang kann man abschalten.
+- **Getestet:**
+  - 3 neue automatische Tests: Rasterpunkte 10 cm, Länge 4,30 m exakt, Linienende hat Vorrang, ohne Maßstab 10-px-Raster, Lageplanlinie mit Länge.
+  - Im Browser: Lageplan-Linie von −20,00/12,00 bis −7,70/12,00 m, zweite Linie setzt genau am Ende an.
+  - Freie Skizze 1:250: 12,30 m und 8,00 m, angeschlossen und beschriftet.
+- **Prüfliste ergänzt:** 11. Gelingt das Zeichnen mit dem Finger trotz Fang, oder brauchst du zusätzlich einen Winkelfang (nur waagerecht/senkrecht)?
+
 ## Wie getestet
-- **115 automatische Tests, alle bestanden.** Neu, wie im Auftrag verlangt:
+- **118 automatische Tests, alle bestanden** (inkl. Nachtrag). Neu, wie im Auftrag verlangt:
   - **erzeugte Abmessungen entsprechen den eingegebenen Maßen**, nämlich die Pixelkoordinaten von Oberkante (42 × 18 m), Sohle (34 × 10 m) und Böschung/Sohle im Querschnitt;
   - **fehlende Maße erscheinen offen** („?“, graue Linie, „Maß fehlt“), auch bei fehlender Tiefe im Schnitt und bei Werten „zur Prüfung“.
   - Außerdem:

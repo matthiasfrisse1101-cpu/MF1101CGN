@@ -1,7 +1,7 @@
 // Etappe 5: Skizzen aus Maßen – erzeugte Abmessungen entsprechen den eingegebenen Maßen, fehlende erscheinen offen.
 import { test, gleich, wahr } from './harness.js';
 import * as M from '../js/massskizze.js';
-import { rasterSchrittPx, fussText } from '../js/skizzenlogik.js';
+import { rasterSchrittPx, fussText, fangPunkt, fangSchrittPx, laengeM } from '../js/skizzenlogik.js';
 import * as G from '../js/gliederung.js';
 
 window.__testG = await (await fetch('../gliederung/test-gliederung.json', { cache: 'reload' })).json();
@@ -133,4 +133,35 @@ test('Gliederungsprüfung: Maßskizze braucht gültige Zuordnung', () => {
   const fehler = G.pruefeGliederung(testG).join(' | ');
   wahr(fehler.includes('unbekanntes Maß "hoehe"'), 'unbekanntes Maß nicht erkannt');
   wahr(fehler.includes('muss auf ein Zahlfeld zeigen'), 'Nicht-Zahlfeld nicht erkannt');
+});
+
+test('Objektfang im Raster: Rasterpunkte alle 10 cm in der Natur, Länge in Metern', () => {
+  const sk = { breite: 1600, hoehe: 1200, massstab: 250, elemente: [] };
+  const schritt = fangSchrittPx(sk);
+  gleich(Math.round(schritt * 1000) / 1000, Math.round(0.1 * M.pxProM(250) * 1000) / 1000);
+  const a = fangPunkt(401.3, 299.2, sk, 20);
+  gleich(a.art, 'raster');
+  wahr(Math.abs(a.x / schritt - Math.round(a.x / schritt)) < 0.01 && Math.abs(a.y / schritt - Math.round(a.y / schritt)) < 0.01, 'nicht auf Rasterpunkt');
+  // 4,30 m waagerecht von einem Rasterpunkt aus
+  const b = fangPunkt(a.x + 4.3 * M.pxProM(250) + 0.6, a.y - 0.5, sk, 20);
+  gleich(laengeM([a.x, a.y], [b.x, b.y], sk), 4.3);
+});
+
+test('Objektfang: Linienende hat Vorrang vor dem Rasterpunkt; ohne Maßstab 10-px-Raster', () => {
+  const sk = { breite: 1600, hoehe: 1200, massstab: 250, elemente: [{ typ: 'strich', punkte: [[100.5, 100.5], [300.7, 100.5]] }] };
+  gleich(fangPunkt(305, 104, sk, 20), { x: 300.7, y: 100.5, art: 'endpunkt' });
+  gleich(fangPunkt(500, 500, sk, 20).art, 'raster');
+  const ohne = { breite: 1600, hoehe: 1200, elemente: [] };
+  gleich(fangSchrittPx(ohne), 10);
+  gleich(fangPunkt(104, 96, ohne, 5), { x: 100, y: 100, art: 'raster' });
+  gleich(laengeM([0, 0], [100, 0], ohne), null);
+});
+
+test('Lageplan: im Raster gezeichnete Linie mit Länge, Fang 10 cm', () => {
+  gleich(M.amRaster(3.14, M.FANG_M), 3.1);
+  gleich(M.amRaster(-7.26, M.FANG_M), -7.3);
+  const svg = M.lageplanSvg(voll(), { elemente: [{ typ: 'linie', punkte: [[-20, 12], [-7.7, 12]], laenge: true }] }, {}).svg;
+  const [x1, y1] = M.lpPunkt(-20, 12, 250), [x2] = M.lpPunkt(-7.7, 12, 250);
+  wahr(svg.includes(`x1="${r(x1)}" y1="${r(y1)}" x2="${r(x2)}"`), 'Linie falsch platziert');
+  wahr(svg.includes('12,30 m'), 'Länge fehlt');
 });

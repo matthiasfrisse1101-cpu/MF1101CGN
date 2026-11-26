@@ -38,8 +38,11 @@ export function rasterWaehlen(massstab, minPx = 80) {
 
 // Am Raster ausrichten (Meter).
 export function amRaster(wertM, rasterM) {
-  return Math.round(wertM / rasterM) * rasterM;
+  return Math.round(Math.round(wertM / rasterM) * rasterM * 1000) / 1000;
 }
+
+// Fang beim Zeichnen im Lageplan: Rasterpunkte alle 10 cm in der Natur.
+export const FANG_M = 0.1;
 
 export function mDE(z, stellen = 2) {
   return z.toFixed(stellen).replace('.', ',');
@@ -312,6 +315,18 @@ export function lageplanSvg(masse, wert = {}, info = {}) {
   // Elemente (Symbole, Zaun) – Lage in Metern
   for (const el of wert.elemente || []) {
     if (el.typ === 'zaun') s += zaunSvg((el.punkte || []).map(([x, y]) => lpPunkt(x, y, massstab)));
+    else if (el.typ === 'linie' && el.punkte && el.punkte.length === 2) {
+      // im Raster gezeichnete Linie (Lage in Metern), auf Wunsch mit Länge
+      const [[ax, ay], [bx, by]] = el.punkte;
+      const [x1, y1] = lpPunkt(ax, ay, massstab), [x2, y2] = lpPunkt(bx, by, massstab);
+      s += linie(x1, y1, x2, y2, { farbe: '#111', dicke: 3 });
+      if (el.laenge) {
+        const l = Math.hypot(bx - ax, by - ay);
+        const w = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+        const wl = w > 90 || w < -90 ? w + 180 : w;
+        s += text((x1 + x2) / 2, (y1 + y2) / 2 - 10, `${mDE(l)} m`, { groesse: 20, farbe: FARBE.mass, drehen: wl });
+      }
+    }
     else if (el.typ === 'symbol') {
       const [x, y] = lpPunkt(el.x, el.y, massstab);
       s += `<g transform="translate(${r(x)} ${r(y)}) rotate(${el.winkel || 0})">${symbolSvg(el)}</g>`;

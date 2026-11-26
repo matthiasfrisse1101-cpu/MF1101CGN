@@ -193,6 +193,51 @@ export function rasterSchrittPx(skizze) {
   return rasterWaehlen(skizze.massstab) * pxProM(skizze.massstab) * (skizze.breite / LEER_BREITE);
 }
 
+// ---------- Zeichnen im Raster mit Objektfang ----------
+// Linien rasten an Rasterpunkten im Abstand von 10 cm (in der Natur) ein – bei gewähltem Maßstab –
+// oder an den Endpunkten vorhandener Linien (Objektfang). Ohne Maßstab: Rasterpunkte alle 10 px.
+export const FANG_M = 0.1;
+
+export function pxProMSkizze(skizze) {
+  return skizze.massstab ? pxProM(skizze.massstab) * (skizze.breite / LEER_BREITE) : null;
+}
+
+export function fangSchrittPx(skizze) {
+  return skizze.massstab ? FANG_M * pxProMSkizze(skizze) : 10;
+}
+
+export function endpunkte(elemente) {
+  const r = [];
+  for (const e of elemente || []) {
+    if (e.typ === 'strich' && e.punkte && e.punkte.length) {
+      r.push(e.punkte[0]);
+      if (e.punkte.length > 1) r.push(e.punkte[e.punkte.length - 1]);
+    }
+  }
+  return r;
+}
+
+// Liefert den gefangenen Punkt { x, y, art: 'endpunkt' | 'raster' }. tolPx: Fangradius für Linienenden.
+export function fangPunkt(x, y, skizze, tolPx, ohne = null) {
+  let best = null;
+  for (const p of endpunkte(skizze.elemente)) {
+    if (ohne && p === ohne) continue;
+    const d = Math.hypot(p[0] - x, p[1] - y);
+    if (d <= tolPx && (!best || d < best.d)) best = { x: p[0], y: p[1], d };
+  }
+  if (best) return { x: best.x, y: best.y, art: 'endpunkt' };
+  const sch = fangSchrittPx(skizze);
+  const rund = (v) => Math.round((Math.round(v / sch) * sch) * 100) / 100;
+  return { x: rund(x), y: rund(y), art: 'raster' };
+}
+
+// Länge in Metern (nur mit Maßstab), sonst null.
+export function laengeM(p1, p2, skizze) {
+  const p = pxProMSkizze(skizze);
+  if (!p) return null;
+  return Math.round((Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / p) * 100) / 100;
+}
+
 export function fussText(skizze, erfasser, datumText) {
   const teile = [skizze.ausLageplan ? 'Funktionsskizze auf Grundlage der Lageplanskizze'
     : skizze.massstab ? `Handskizze im Raster M 1:${skizze.massstab} (1 Kästchen = ${String(rasterWaehlen(skizze.massstab)).replace('.', ',')} m), nicht maßstäblich verbindlich`

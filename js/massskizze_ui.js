@@ -137,7 +137,7 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
   w.elemente = w.elemente || [];
   const masse = M.leseMasse(buch, feld.masse);
 
-  let modus = 'verschieben';
+  let modus = 'linie';
   let fang = true;
   let auswahl = -1;
   let zaun = null;
@@ -157,24 +157,37 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
       const [x, y] = M.lpPunkt(el.x, el.y, aktuell.massstab);
       flaeche.querySelector('svg').insertAdjacentHTML('beforeend', `<circle cx="${x}" cy="${y}" r="46" fill="none" stroke="#ffb000" stroke-width="5" stroke-dasharray="12 8"/>`);
     }
-    infoZeile.textContent = `M 1:${aktuell.massstab}${w.massstab === 'auto' ? ' (automatisch)' : ''} · 1 Kästchen = ${M.mDE(aktuell.rasterM, aktuell.rasterM % 1 ? 1 : 0)} m${fang ? ` · Ausrichten am Raster: ${M.mDE(fangM(), fangM() % 1 ? 1 : 0)} m` : ''}`;
+    infoZeile.textContent = `M 1:${aktuell.massstab}${w.massstab === 'auto' ? ' (automatisch)' : ''} · 1 Kästchen = ${M.mDE(aktuell.rasterM, aktuell.rasterM % 1 ? 1 : 0)} m${fang ? ' · Objektfang 10 cm' : ''}`;
   };
-  const fangM = () => Math.max(0.5, aktuell.rasterM / 5);
+  const fangM = () => M.FANG_M; // Objektfang im Rasterpunkt: 10 cm
   const punktM = (ev) => {
     const r = flaeche.getBoundingClientRect();
     const px = (ev.clientX - r.left) * (M.BREITE / r.width);
     const py = (ev.clientY - r.top) * (M.BREITE / r.width);
     let [x, y] = M.lpMeter(px, py, aktuell.massstab);
-    if (fang) { x = M.amRaster(x, fangM()); y = M.amRaster(y, fangM()); }
-    return { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, px, py };
+    let art = 'frei';
+    if (fang) {
+      // Objektfang: zuerst Enden von Linien und Zaunecken (ca. 20 Bildschirmpixel), sonst Rasterpunkt
+      const tol = 20 * (M.BREITE / r.width) / M.pxProM(aktuell.massstab);
+      let best = null;
+      for (const el of w.elemente) {
+        if ((el.typ === 'linie' || el.typ === 'zaun') && el !== laufend) {
+          for (const q of el.punkte) { const d = Math.hypot(q[0] - x, q[1] - y); if (d <= tol && (!best || d < best.d)) best = { q, d }; }
+        }
+      }
+      if (best) { [x, y] = best.q; art = 'endpunkt'; } else { x = M.amRaster(x, fangM()); y = M.amRaster(y, fangM()); art = 'raster'; }
+    }
+    return { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000, px, py, art };
   };
+  let laufend = null; // Linie, die gerade gezogen wird
+  let laengeBeschriften = true;
   const treffer = (px, py) => {
     for (let i = w.elemente.length - 1; i >= 0; i--) {
       const el = w.elemente[i];
       if (el.typ === 'symbol') {
         const [x, y] = M.lpPunkt(el.x, el.y, aktuell.massstab);
         if (Math.hypot(px - x, py - y) < 50) return i;
-      } else if (el.typ === 'zaun') {
+      } else if (el.typ === 'zaun' || el.typ === 'linie') {
         const pts = el.punkte.map(([a, b]) => M.lpPunkt(a, b, aktuell.massstab));
         for (let j = 1; j < pts.length; j++) {
           const [x1, y1] = pts[j - 1], [x2, y2] = pts[j];
@@ -203,6 +216,12 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
       w.elemente.push({ typ: 'symbol', art, x: p.x, y: p.y, winkel: 0, ...(beschriftung ? { text: beschriftung } : {}) });
       auswahl = w.elemente.length - 1;
       speichern(); zeichne();
+    } else if (modus === 'linie') {
+      merke();
+      laufend = { typ: 'linie', punkte: [[p.x, p.y], [p.x, p.y]], laenge: laengeBeschriften };
+      w.elemente.push(laufend);
+      flaeche.setPointerCapture(ev.pointerId);
+      zeichne();
     } else if (modus === 'zaun') {
       if (!zaun) { merke(); zaun = { typ: 'zaun', punkte: [] }; w.elemente.push(zaun); }
       zaun.punkte.push([p.x, p.y]);
@@ -222,12 +241,29 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
     }
   });
   flaeche.addEventListener('pointermove', (ev) => {
+    if (laufend) {
+      const p = punktM(ev);
+      laufend.punkte[1] = [p.x, p.y];
+      zeichne();
+      const [a, b] = laufend.punkte;
+      infoZeile.textContent = `Linie: ${M.mDE(Math.hypot(b[0] - a[0], b[1] - a[1]))} m${p.art === 'endpunkt' ? ' · gefangen am Linienende' : ' · Rasterpunkt 10 cm'}`;
+      return;
+    }
     if (!ziehen) return;
     const p = punktM(ev);
     const el = w.elemente[ziehen.i];
     if (el.x !== p.x || el.y !== p.y) { el.x = p.x; el.y = p.y; ziehen.bewegt = true; zeichne(); }
   });
-  const ende = () => { if (ziehen) { if (ziehen.bewegt) speichern(); else rueck.pop(); ziehen = null; } };
+  const ende = () => {
+    if (laufend) {
+      const [a, b] = laufend.punkte;
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 0.05) { w.elemente = w.elemente.filter((x) => x !== laufend); rueck.pop(); }
+      laufend = null;
+      speichern(); zeichne();
+      return;
+    }
+    if (ziehen) { if (ziehen.bewegt) speichern(); else rueck.pop(); ziehen = null; }
+  };
   flaeche.addEventListener('pointerup', ende);
   flaeche.addEventListener('pointercancel', ende);
 
@@ -236,7 +272,12 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
   const werkzeug = () => {
     leere(wz);
     const mk = (m, t) => h('button', { class: `wz ${modus === m ? 'aktiv' : ''}`, onclick: () => { if (modus === 'zaun' && m !== 'zaun') zaun = null; modus = m; werkzeug(); } }, t);
-    wz.append(h('div', { class: 'wz-zeile' }, mk('verschieben', '✋ Verschieben'), mk('drehen', '↻ Drehen'), mk('loeschen', '🧽 Löschen')));
+    wz.append(h('div', { class: 'wz-zeile' }, mk('linie', '📏 Linie im Raster'), mk('verschieben', '✋ Verschieben')),
+      h('div', { class: 'wz-zeile' }, mk('drehen', '↻ Drehen'), mk('loeschen', '🧽 Löschen')));
+    if (modus === 'linie') {
+      wz.append(h('p', { class: 'feld-hinweis' }, 'Am Anfangspunkt aufsetzen, zum Endpunkt ziehen, loslassen. Objektfang: Rasterpunkte alle 10 cm, Enden von Linien und Zaunecken.'),
+        h('label', { class: 'option' }, h('input', { type: 'checkbox', checked: laengeBeschriften, onchange: (ev) => { laengeBeschriften = ev.target.checked; } }), h('span', {}, 'Länge an die Linie schreiben')));
+    }
     const sym = h('div', { class: 'symbol-raster' });
     for (const [art, d] of Object.entries(M.SYMBOLE)) sym.append(mk(`setzen:${art}`, d.name));
     sym.append(h('button', { class: `wz ${modus === 'zaun' ? 'aktiv' : ''}`, onclick: () => { modus = 'zaun'; zaun = null; werkzeug(); } }, 'Zaun'));
@@ -245,14 +286,14 @@ export async function bildschirmLageplan(umgebung, buchId, key) {
       wz.append(h('p', { class: 'feld-hinweis' }, 'Zaun: nacheinander die Eckpunkte antippen.'),
         h('button', { class: 'knopf klein', onclick: () => { zaun = null; modus = 'verschieben'; werkzeug(); } }, zaun && zaun.punkte.length ? 'Zaun fertig' : 'Abbrechen'));
     }
-    const hilfe = modus.startsWith('setzen:') ? `${M.SYMBOLE[modus.slice(7)].name}: Stelle im Lageplan antippen.` : { verschieben: 'Symbol antippen und ziehen.', drehen: 'Symbol antippen – dreht um 45°.', loeschen: 'Symbol oder Zaun antippen.', zaun: '' }[modus];
+    const hilfe = modus.startsWith('setzen:') ? `${M.SYMBOLE[modus.slice(7)].name}: Stelle im Lageplan antippen.` : { verschieben: 'Symbol antippen und ziehen.', drehen: 'Symbol antippen – dreht um 45°.', loeschen: 'Symbol, Linie oder Zaun antippen.', zaun: '' }[modus];
     if (hilfe) wz.append(h('p', { class: 'feld-hinweis' }, hilfe));
     // Maßstab und Raster
     const sel = h('select', { class: 'ziel-auswahl', onchange: (ev) => { merke(); w.massstab = ev.target.value === 'auto' ? 'auto' : Number(ev.target.value); speichern(); zeichne(); } },
       h('option', { value: 'auto', selected: w.massstab === 'auto' }, 'Maßstab automatisch (passend zum Becken)'),
       M.MASSSTAEBE.map((m) => h('option', { value: m, selected: w.massstab === m }, `M 1:${m} (1 Kästchen = ${M.mDE(M.rasterWaehlen(m), M.rasterWaehlen(m) % 1 ? 1 : 0)} m)`)));
     wz.append(sel,
-      h('label', { class: 'option' }, h('input', { type: 'checkbox', checked: fang, onchange: (ev) => { fang = ev.target.checked; zeichne(); } }), h('span', {}, 'Symbole am Raster ausrichten')),
+      h('label', { class: 'option' }, h('input', { type: 'checkbox', checked: fang, onchange: (ev) => { fang = ev.target.checked; zeichne(); } }), h('span', {}, 'Objektfang (Rasterpunkte 10 cm, Linienenden)')),
       h('label', { class: 'option' }, h('input', { type: 'checkbox', checked: w.schnitte !== false, onchange: (ev) => { w.schnitte = ev.target.checked; speichern(); zeichne(); } }), h('span', {}, 'Schnittlinien A–A und B–B zeigen')));
     // Nordpfeil
     const nord = h('div', { class: 'wz-zeile' },
