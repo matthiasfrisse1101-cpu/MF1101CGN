@@ -7,7 +7,7 @@ import { fotoFeld } from './fotos.js';
 import { skizzenFeld, bildschirmSkizze, ladeSkizzen } from './skizzen.js';
 import { eingriffsAbgleich, markenNummern } from './skizzenlogik.js';
 import { urlsFreigeben } from './bilder.js';
-import { massFeld, sammeldiktatBox, notizBox } from './diktat.js';
+import { massFeld, sammeldiktatBox, notizBox, bildschirmDiktat } from './diktat.js';
 import { protokollFeld } from './protokoll.js';
 import { massskizzeFeld, bildschirmLageplan } from './massskizze_ui.js';
 import { ausgabeAbschnitt, STANDARD_GRENZE_MB } from './ausgabe_ui.js';
@@ -96,6 +96,7 @@ async function zeige() {
     else if (teile[0] === 'buch' && teile[2] === 'kapitel') await bildschirmKapitel(teile[1], teile[3]);
     else if (teile[0] === 'buch' && teile[2] === 'akten') await bildschirmAkten(teile[1]);
     else if (teile[0] === 'buch' && teile[2] === 'skizze') await bildschirmSkizze({ app, kopf, fuss, ladeBuch, gliederungFuer, aendern }, teile[1], teile[3]);
+    else if (teile[0] === 'buch' && teile[2] === 'diktat') await bildschirmDiktat({ app, kopf, fuss, ladeBuch, gliederungFuer, aendern }, teile[1], teile[3], G.sichtbareFelder);
     else if (teile[0] === 'buch' && teile[2] === 'lageplan') await bildschirmLageplan({ app, kopf, fuss, ladeBuch, gliederungFuer, aendern, erfasser: zustand.einstellungen.erfasser || '' }, teile[1], teile[3]);
     else if (teile[0] === 'buch') await bildschirmBuch(teile[1]);
     else location.hash = '#/';
@@ -390,8 +391,8 @@ async function bildschirmKapitel(buchId, kapId) {
 
   const felder = G.sichtbareFelder(kap, buch, g);
   const neuZeichnen = async () => { const y = window.scrollY; await bildschirmKapitel(buchId, kapId); window.scrollTo(0, y); };
-  if (felder.some((f) => !f.aus && !['foto', 'skizze', 'pruefprotokoll'].includes(f.art))) {
-    main.append(sammeldiktatBox({ buch, kap, felder, aendern, neuZeichnen }));
+  if (felder.some((f) => !f.aus && !['foto', 'skizze', 'massskizze'].includes(f.art))) {
+    main.append(sammeldiktatBox({ g, buch, kap, felder }));
   }
   // Ändert sich ein Feld, von dem andere Felder abhängen (Sichtbarkeit, Vorschläge), wird das Kapitel neu aufgebaut.
   const abhaengig = G.abhaengigkeitsfelder(g);

@@ -1,6 +1,6 @@
 import { test, gleich, wahr } from './harness.js';
 import { bewerteMassEingabe, massZustand, massAnzeige, erwarteteArt } from '../js/masse.js';
-import { zerlege, werteAus, stichwoerter } from '../js/sammeldiktat.js';
+import { zerlege, werteAus, stichwoerter, feinTeilen, passt, protokollTreffer } from '../js/sammeldiktat.js';
 
 const laenge = { id: 'laenge', label: 'Länge Böschungsoberkante', art: 'zahl', einheit: 'm', stichwoerter: ['länge'] };
 const breite = { id: 'breite', label: 'Breite Böschungsoberkante', art: 'zahl', einheit: 'm', stichwoerter: ['breite'] };
@@ -99,4 +99,59 @@ test('Sammeldiktat: Satz wird Tabellenzeile (Bestandsliste)', () => {
 test('Stichwörter aus Feldname ohne Füllwörter', () => {
   const w = stichwoerter({ label: 'Länge der Böschungsoberkante', stichwoerter: ['Länge'] });
   wahr(w.includes('länge') && w.includes('böschungsoberkante') && !w.includes('der'), w.join(','));
+});
+
+// ---------- Intelligentes Diktat (ohne Cloud) ----------
+const tiefe = { id: 'tiefe', label: 'Tiefe (Sohle bis Oberkante)', art: 'zahl', einheit: 'm', stichwoerter: ['tiefe'] };
+const prot = { gruppen: [
+  { id: 'A', titel: 'Sicherheitseinrichtungen', punkte: [{ nr: '1', text: 'Zuwegung zur Anlage' }, { nr: '2', text: 'Einzäunung, Tor' }] },
+  { id: 'B', titel: 'Funktionen', punkte: [{ nr: '1', text: 'Wasserstand (ausr. ü. UK Tauchwand)' }, { nr: '2', text: 'Ölfilm' }] },
+  { id: 'D', titel: 'Zustand', punkte: [{ nr: '2', text: 'Bewuchs' }, { nr: '4', text: 'Böschungen' }] },
+] };
+const ek = { id: 'erstkontrolle', label: 'Erstkontrolle', art: 'pruefprotokoll', protokoll: 'A5_2' };
+
+test('Diktat: mehrere Angaben ohne Komma werden getrennt', () => {
+  const v = werteAus('Länge 32 Meter und Breite 14 Meter Böschung 1 zu 2 Tiefe zwei Meter', [laenge, breite, boeschung, tiefe]);
+  gleich(v.map((x) => [x.feldId, x.wert]), [['laenge', '32 Meter'], ['breite', '14 Meter'], ['boeschung', '1 zu 2'], ['tiefe', 'zwei Meter']]);
+});
+
+test('Diktat: gebeugte Formen und Synonyme', () => {
+  wahr(passt('Längen', 'länge') && passt('Schiebers', 'schieber') && !passt('Langeweile', 'länge'), 'Beugung');
+  const v = werteAus('tief 2,5 m, Neigung 1 zu 3', [tiefe, boeschung]);
+  gleich(v.map((x) => x.feldId), ['tiefe', 'boeschung']);
+});
+
+test('Diktat: Korrektur – die letzte Angabe gilt', () => {
+  const v = werteAus('Länge 32 Meter nein Länge 33 Meter', [laenge]);
+  gleich(v.filter((x) => !x.ersetzt).map((x) => x.wert), ['33 Meter']);
+  gleich(v.filter((x) => x.ersetzt).map((x) => x.wert), ['32 Meter']);
+  const k = werteAus('Länge 30 m. Korrektur Länge 31 m', [laenge]);
+  gleich(k.filter((x) => !x.ersetzt).map((x) => x.wert), ['31 m']);
+});
+
+test('Diktat: „nein“ als Wert bleibt erhalten', () => {
+  const v = werteAus('Ölrückhaltung nein Länge 30 Meter', [oel, laenge]);
+  gleich(v.map((x) => [x.feldId, x.wert]), [['oel', false], ['laenge', '30 Meter']]);
+});
+
+test('Diktat: Text mit Ortsangaben wird nicht zerhackt', () => {
+  gleich(feinTeilen('Zulauf von Norden über Rinne', ['zulauf', 'länge']), ['Zulauf von Norden über Rinne']);
+});
+
+test('Diktat Erstkontrolle: Schäden den Prüfpunkten zuordnen, Rest ok', () => {
+  const v = werteAus('Schaden Tor klemmt, Ölfilm an der Tauchwand, Bewuchs Böschung Nordseite. Zuwegung ok, sonst alles ok', [], { protokolle: [{ feld: ek, protokoll: prot }] });
+  gleich(v.map((x) => x.typ === 'punkt' ? `${x.punkt}:${x.ergebnis}:${x.schaden}` : x.typ), [
+    'A.2:schaden:Tor klemmt', 'B.2:schaden:Ölfilm an der Tauchwand', 'D.2:schaden:Bewuchs Böschung Nordseite', 'A.1:ok:', 'restOk']);
+});
+
+test('Diktat Erstkontrolle: Zaun als Synonym, ohne Treffer kein Vorschlag', () => {
+  gleich(protokollTreffer('Zaun beschädigt', [{ feld: ek, protokoll: prot }]).punkt, 'A.2');
+  gleich(protokollTreffer('Wetter sonnig', [{ feld: ek, protokoll: prot }]), null);
+});
+
+test('Diktat: beim Maß zählt nur Zahl und Einheit, der Rest wird neue Angabe', () => {
+  const v = werteAus('Länge 30 m Zulauf von Norden', [laenge, zulauf]);
+  gleich(v.map((x) => [x.feldId, x.wert]), [['laenge', '30 m'], ['zulauf', 'von Norden']]);
+  const n = werteAus('Länge 30 m Zaun beschädigt', [laenge]);
+  gleich(n.map((x) => x.typ === 'notiz' ? `notiz:${x.text}` : x.wert), ['30 m', 'notiz:Zaun beschädigt']);
 });

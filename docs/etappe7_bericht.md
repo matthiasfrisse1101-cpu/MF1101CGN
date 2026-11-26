@@ -52,6 +52,18 @@ Auf deinen Hinweis: Im Bericht war nicht zu erkennen, welches Foto zu welchem Ma
 - Damit der Bezug entsteht, das Foto **direkt beim Schaden** aufnehmen (Erstkontrolle → Prüfpunkt → „Schaden“ → 📷).
 - Getestet: 136 automatische Tests (neu: Fotonummer am Schaden und Bezug unter dem Foto in PDF und Word mit der echten Vorlage) sowie ein Durchlauf mit echtem Foto am Prüfpunkt D 2 im Beispielbuch.
 
+## Nachtrag: Intelligentes Diktat ohne Cloud (Version 0.8.0)
+Auf deinen Wunsch nach einer Diktierfunktion „wie Claude oder Gemini“ – mit deiner Entscheidung: **alles bleibt auf dem Gerät**, kein KI-Dienst.
+- **Diktier-Bildschirm je Kapitel** („🎤 Diktieren (frei sprechen)“ oben im Kapitel): großes Textfeld fürs Mikrofon der Tastatur, darunter **Live-Vorschläge**, die sich beim Sprechen aktualisieren, „Alle übernehmen“ oder einzeln übernehmen bzw. umleiten. Das Diktat bleibt gespeichert, bis es übernommen ist („Später“).
+- **Ohne Satzzeichen:** „Länge 42 Meter und Breite 18 Meter Böschung 1 zu 2 tief zwei Meter“ → vier Angaben. Getrennt wird vor einem Stichwort, wenn davor „und/sowie/dann …“ steht oder die vorige Angabe schon einen Wert hat.
+- **Gebeugte Formen und Synonyme:** „Längen“, „Schiebers“, „tief“, „Neigung“, „Zaun“, „Aufwuchs“, „Schacht“ …
+- **Korrektur:** „Länge 32 Meter nein Länge 33 Meter“ oder „Korrektur Länge 31 m“ – die letzte Angabe gilt, die frühere erscheint durchgestrichen. „Ölrückhaltung nein“ bleibt ein Wert.
+- **Maße sauber:** Bei Zahlfeldern gehören nur Zahl und Einheit zum Wert; was danach gesprochen wird, wird als nächste Angabe ausgewertet (z. B. Tabellenzeile oder Notiz).
+- **Erstkontrolle per Sprache (C 2):** „Schaden Tor klemmt, Ölfilm an der Tauchwand, Bewuchs auf der Böschung Nordseite, Schieber schwergängig. Sonst alles ok“ → Schäden bei A 2, B 2, D 2, E 1, alle übrigen 24 Punkte „ok“. Das zuerst genannte Stichwort bestimmt den Prüfpunkt.
+- Nichts wird ohne „Übernehmen“ eingetragen; einzeln übernommene Angaben werden beim Weitersprechen nicht doppelt eingetragen.
+- Getestet: 144 automatische Tests (neu: Trennung ohne Komma, Beugung/Synonyme, Korrektur, „nein“ als Wert, Ortsangaben nicht zerhackt, Maß mit Folgetext, Erstkontrolle mit Rest ok, Zaun-Synonym). Im Browser mit der echten Gliederung: A 4.2 (Korrektur der Tiefe erkannt) und C 2 (4 Schäden, 24 × ok) – Beispielbuch danach wiederhergestellt.
+- **Grenzen:** Kein echtes Sprachverständnis wie bei einem KI-Dienst – ungewöhnliche Formulierungen landen als Notiz. Wie Gboard gesprochene Zahlen schreibt, ist am Gerät zu prüfen.
+
 ## Stand des Projekts nach Etappe 7
 Alle Etappen des Auftrags v1.3 sind umgesetzt (0–7, dazu 4a sowie Objekt- und Winkelfang). Offen bleibt, was nur am echten Gerät oder bei dir zu klären ist:
 - **Veröffentlichung:** GitHub Pages einschalten (Settings → Pages → main / root), Stände 4a–7 hochladen (GitHub Desktop → „Push origin“).
