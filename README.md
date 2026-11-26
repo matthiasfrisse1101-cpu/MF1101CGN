@@ -2,7 +2,7 @@
 
 Web-App fürs Handy (Android/Chrome), mit der bestehende Entwässerungsanlagen an Straßen vor Ort aufgenommen werden. Ergebnis ist ein Beckenbuch nach der Vorlage der Dienststelle. Läuft offline, speichert alles auf dem Gerät, ohne Konto und ohne fremde Dienste.
 
-**Stand:** Etappe 6 (Erfassung mit Fotos, Skizzen, Maßen, Diktat, Erstkontrolle, Bauform, Lageplan- und Schnittskizzen; Ausgabe als PDF und Word, Versand über den Teilen-Dialog). Sicherung folgt. Skizzen aus Maßen, PDF, Word und Sicherung folgen.
+**Stand:** Etappe 7 – alle Etappen umgesetzt: Erfassung mit Fotos, Skizzen, Maßen, Diktat, Erstkontrolle, Bauform, Lageplan- und Schnittskizzen; Ausgabe als PDF und Word, Versand über den Teilen-Dialog; Sicherung und Wiedereinlesen. Kurzanleitung: `anleitung.html`. Skizzen aus Maßen, PDF, Word und Sicherung folgen.
 
 ## Ordner
 | Ordner/Datei | Inhalt |
@@ -16,6 +16,8 @@ Web-App fürs Handy (Android/Chrome), mit der bestehende Entwässerungsanlagen a
 | `js/zahlen.js`, `js/masse.js`, `js/sammeldiktat.js`, `js/diktat.js` | Zahlen/Maße erkennen, Sammeldiktat zuordnen, Oberfläche dazu |
 | `js/protokoll.js` | Erstkontrolle mit dem Protokoll A 5.2 |
 | `js/ausgabe.js`, `js/pdf.js`, `js/word.js`, `js/bildquelle.js`, `js/ausgabe_ui.js` | PDF und Word erzeugen, Versand |
+| `js/sicherung.js`, `js/sicherung_ui.js` | Sicherung als ZIP (mit Fotos und Skizzen) und Wiedereinlesen |
+| `anleitung.html` | Kurzanleitung auf einer Seite |
 | `lib/` | pdfmake (PDF) und JSZip (Word), MIT-Lizenz, lokal eingebunden |
 | `js/massskizze.js`, `js/massskizze_ui.js` | Lageplan, Quer- und Längsschnitt aus den Maßen (SVG), Maßstab und Raster, Lageplan-Editor |
 | `gliederung/test-gliederung.json` | **Test**-Gliederung mit erfundenen Feldern |

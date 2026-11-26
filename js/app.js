@@ -11,6 +11,7 @@ import { massFeld, sammeldiktatBox, notizBox } from './diktat.js';
 import { protokollFeld } from './protokoll.js';
 import { massskizzeFeld, bildschirmLageplan } from './massskizze_ui.js';
 import { ausgabeAbschnitt, STANDARD_GRENZE_MB } from './ausgabe_ui.js';
+import { sicherungAbschnitt, einlesenKnopf } from './sicherung_ui.js';
 
 const app = document.getElementById('app');
 const zustand = {
@@ -136,7 +137,7 @@ async function bildschirmListe() {
       'Für echte Beckenbücher unter ', h('a', { href: '#/einstellungen' }, 'Einstellungen'), ' das Vorlagenpaket laden.'));
   }
   if (buecher.length === 0) {
-    main.append(h('p', { class: 'leer' }, 'Noch kein Beckenbuch angelegt.'));
+    main.append(h('p', { class: 'leer' }, 'Noch kein Beckenbuch angelegt. Eine Sicherungsdatei lässt sich unter Einstellungen → „Sicherung einlesen …“ übernehmen.'));
   }
   for (const b of buecher) {
     main.append(h('a', { class: 'karte', href: `#/buch/${encodeURIComponent(b.id)}` },
@@ -308,6 +309,7 @@ async function bildschirmBuch(id) {
   }
 
   main.append(ausgabeAbschnitt({ buch, g, vorlage: vorlageDs, einstellungen: zustand.einstellungen, aendern, neuZeichnen: zeige }));
+  main.append(sicherungAbschnitt({ buecher: [buch], aendern, nachher: zeige }));
 
   const akten = G.akteneintraege(g, buch);
   main.append(h('div', { class: 'abschnitt' },
@@ -687,6 +689,14 @@ async function bildschirmEinstellungen() {
     }
   }
   main.append(stamm);
+
+  // Sicherung
+  const alleBuecher = await db.alle('buecher');
+  main.append(sicherungAbschnitt({ buecher: alleBuecher, aendern, titel: 'Sicherung aller Beckenbücher', nachher: () => {} }));
+  main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Sicherung einlesen'),
+    h('p', { class: 'feld-hinweis' }, 'Sicherungsdatei (.zip) von diesem oder einem anderen Gerät übernehmen. Vorhandene Beckenbücher werden nur nach Rückfrage ersetzt.'),
+    einlesenKnopf({ fertig: () => { location.hash = '#/'; } })));
+  main.append(h('a', { class: 'knopf breit', href: 'anleitung.html', target: '_blank' }, '📖 Kurzanleitung (eine Seite)'));
 
   // Versand
   main.append(h('div', { class: 'abschnitt' }, h('h2', {}, 'Versand'),

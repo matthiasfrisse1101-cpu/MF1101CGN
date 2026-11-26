@@ -261,3 +261,7 @@ select.ziel-auswahl {
 
 /* Ausgabe (Etappe 6) */
 .dateiname { overflow-wrap: anywhere; }
+
+/* Sicherung (Etappe 7) */
+.dialog-spalte { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.dialog-spalte .knopf { margin: 0; }
